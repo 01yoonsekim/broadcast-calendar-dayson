@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📺 방송 일정 캘린더</title>
+<style>
+  :root {
+    --sk:#BDD7EE;--sk-t:#1F3864;--k:#C6EFCE;--k-t:#1E4620;
+    --ns:#FFE699;--ns-t:#7E5500;--ssg:#FCE4D6;--ssg-t:#843C0C;
+    --w:#F4CCCC;--w-t:#741B47;--hd:#D0E4F7;--hd-t:#0B3D91;
+    --hdp:#B4D7FF;--hdp-t:#0B3D91;--home:#D9EAD3;--home-t:#274E13;
+    --cj:#E8D5FF;--cj-t:#4A0080;--cjp:#D5B0FF;--cjp-t:#4A0080;
+    --def:#F0F0F0;--def-t:#333;
+    --primary:#1F3864;--primary-light:#2C5099;--accent:#3498DB;
+    --bg:#f0f4f8;--white:#fff;--border:#dde3ec;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Malgun Gothic','Apple SD Gothic Neo',Arial,sans-serif;background:var(--bg);color:#1a1a2e;}
+
+  /* ── Header ── */
+  header{background:var(--primary);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.3);flex-wrap:wrap;}
+  header h1{font-size:1.1rem;font-weight:700;}
+  .nav-btn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.9rem;}
+  .nav-btn:hover{background:rgba(255,255,255,.3);}
+  .month-label{font-size:1.2rem;font-weight:700;min-width:110px;text-align:center;}
+  .hbtn{border:none;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:.82rem;font-weight:600;white-space:nowrap;}
+  .hbtn-green{background:#27AE60;color:#fff;} .hbtn-green:hover{background:#219A52;}
+  .hbtn-blue{background:var(--accent);color:#fff;} .hbtn-blue:hover{background:#2980B9;}
+  .hbtn-orange{background:#E67E22;color:#fff;} .hbtn-orange:hover{background:#CA6F1E;}
+  .hbtn-red{background:#E74C3C;color:#fff;} .hbtn-red:hover{background:#C0392B;}
+  #file-import{display:none;}
+
+  /* ── Filter bar ── */
+  .filter-bar{background:#fff;border-bottom:1px solid var(--border);padding:8px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .filter-bar label{font-size:.78rem;font-weight:700;color:var(--primary);}
+  .ch-filter-btn{padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;border:2px solid transparent;transition:all .15s;opacity:.55;}
+  .ch-filter-btn.active{opacity:1;border-color:rgba(0,0,0,.25);}
+  .ch-filter-btn.ch-SK{background:var(--sk);color:var(--sk-t);}
+  .ch-filter-btn.ch-K{background:var(--k);color:var(--k-t);}
+  .ch-filter-btn.ch-NS{background:var(--ns);color:var(--ns-t);}
+  .ch-filter-btn.ch-SSG{background:var(--ssg);color:var(--ssg-t);}
+  .ch-filter-btn.ch-W{background:var(--w);color:var(--w-t);}
+  .ch-filter-btn.ch-현대{background:var(--hd);color:var(--hd-t);}
+  .ch-filter-btn.ch-현대p{background:var(--hdp);color:var(--hdp-t);}
+  .ch-filter-btn.ch-홈앤{background:var(--home);color:var(--home-t);}
+  .ch-filter-btn.ch-CJ{background:var(--cj);color:var(--cj-t);}
+  .ch-filter-btn.ch-CJp{background:var(--cjp);color:var(--cjp-t);}
+
+  /* ── Calendar ── */
+  .cal-wrapper{padding:12px 20px 20px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-hcell{background:#334E7C;color:#fff;text-align:center;padding:7px 0;font-weight:700;font-size:.85rem;border-radius:6px;}
+  .cal-hcell.sat{background:#2271B3;} .cal-hcell.sun{background:#B32222;}
+  .cal-day{background:#fff;border-radius:8px;min-height:105px;padding:5px;border:1.5px solid var(--border);display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s;}
+  .cal-day:hover{border-color:#4A90D9;box-shadow:0 2px 8px rgba(74,144,217,.18);}
+  .cal-day.other-month{background:#f8fafc;opacity:.45;}
+  .cal-day.today{border-color:#E74C3C;border-width:2px;}
+  .cal-day.sat .day-num{color:#2271B3;} .cal-day.sun .day-num{color:#B32222;}
+  .day-num{font-size:.78rem;font-weight:700;color:#555;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;}
+  .add-btn{opacity:0;transition:opacity .15s;background:#E8F4FD;border:1px solid #aac;color:#334E7C;border-radius:4px;padding:1px 5px;font-size:.7rem;cursor:pointer;}
+  .cal-day:hover .add-btn{opacity:1;}
+
+  .bc{border-radius:5px;padding:3px 6px;margin-bottom:3px;font-size:.72rem;line-height:1.4;cursor:pointer;transition:filter .15s,transform .1s;position:relative;}
+  .bc:hover{filter:brightness(.92);transform:translateY(-1px);}
+  .bc .bt{font-weight:700;font-size:.68rem;}
+  .bc .bch{font-weight:800;font-size:.68rem;margin-left:3px;}
+  .bc .bi{font-size:.7rem;display:block;margin-top:1px;}
+  .bc .btg{font-size:.65rem;opacity:.75;}
+  .bc .bp{font-size:.62rem;opacity:.7;font-style:italic;}
+  .bc .bperf{font-size:.62rem;color:#27AE60;font-weight:700;}
+  .bc .dx{position:absolute;top:2px;right:3px;font-size:.62rem;opacity:0;transition:opacity .15s;color:#888;background:rgba(255,255,255,.75);border-radius:3px;padding:0 2px;}
+  .bc:hover .dx{opacity:1;}
+
+  .ch-SK{background:var(--sk);color:var(--sk-t);} .ch-K{background:var(--k);color:var(--k-t);}
+  .ch-NS{background:var(--ns);color:var(--ns-t);} .ch-SSG{background:var(--ssg);color:var(--ssg-t);}
+  .ch-W{background:var(--w);color:var(--w-t);} .ch-현대{background:var(--hd);color:var(--hd-t);}
+  .ch-현대p{background:var(--hdp);color:var(--hdp-t);} .ch-홈앤{background:var(--home);color:var(--home-t);}
+  .ch-CJ{background:var(--cj);color:var(--cj-t);} .ch-CJp{background:var(--cjp);color:var(--cjp-t);}
+  .ch-def{background:var(--def);color:var(--def-t);}
+
+  /* ── Stats ── */
+  .stats-bar{background:#fff;border-top:1px solid var(--border);padding:9px 20px;display:flex;gap:20px;font-size:.8rem;color:#666;flex-wrap:wrap;}
+  .stats-bar strong{color:var(--primary);}
+
+  /* ── Toast ── */
+  #toast{position:fixed;bottom:24px;right:24px;background:var(--primary);color:#fff;padding:10px 18px;border-radius:8px;font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:2000;}
+  #toast.show{opacity:1;}
+
+  /* ══════════════════════════════════════════════════
+     SPREADSHEET MODAL  (새로운 스프레드시트형 입력창)
+  ══════════════════════════════════════════════════ */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:10px;}
+  .modal-overlay.hidden{display:none;}
+  .modal-sheet{background:#fff;border-radius:12px;width:min(920px,98vw);max-height:95vh;overflow-y:auto;box-shadow:0 12px 50px rgba(0,0,0,.28);display:flex;flex-direction:column;}
+  .modal-header{background:var(--primary);color:#fff;padding:14px 20px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;}
+  .modal-header h2{font-size:1rem;font-weight:700;}
+  .modal-close{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;opacity:.8;line-height:1;}
+  .modal-close:hover{opacity:1;}
+
+  /* 탭 */
+  .modal-tabs{display:flex;border-bottom:2px solid var(--border);background:#f8fafc;}
+  .mtab{padding:10px 20px;font-size:.85rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;color:#888;margin-bottom:-2px;transition:all .15s;}
+  .mtab.active{color:var(--primary);border-bottom-color:var(--primary);background:#fff;}
+
+  /* 스프레드시트 그리드 */
+  .ss-body{padding:0;}
+  .ss-section{padding:14px 18px 6px;}
+  .ss-section-title{font-size:.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #e8eef7;}
+  .ss-grid{display:grid;gap:10px;}
+  .ss-grid-2{grid-template-columns:1fr 1fr;}
+  .ss-grid-3{grid-template-columns:1fr 1fr 1fr;}
+  .ss-grid-4{grid-template-columns:1fr 1fr 1fr 1fr;}
+  .ss-grid-6{grid-template-columns:repeat(6,1fr);}
+
+  .ss-field{display:flex;flex-direction:column;gap:4px;}
+  .ss-field label{font-size:.72rem;font-weight:700;color:#666;white-space:nowrap;}
+  .ss-field label .req{color:#E74C3C;}
+  .ss-field input,.ss-field select,.ss-field textarea{
+    border:1.5px solid var(--border);border-radius:6px;padding:7px 9px;
+    font-size:.85rem;font-family:inherit;background:#fafbfc;
+    transition:border-color .15s;width:100%;
+  }
+  .ss-field input:focus,.ss-field select:focus,.ss-field textarea:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(52,152,219,.1);}
+  .ss-field input[type=number]{text-align:right;}
+  .ss-field .unit{font-size:.68rem;color:#888;margin-top:2px;}
+
+  /* 자동계산 필드 */
+  .ss-field input.auto-calc{background:#f0f8ff;color:var(--primary);font-weight:700;border-color:#BDD7EE;}
+
+  /* 구분선 */
+  .ss-divider{height:1px;background:var(--border);margin:4px 0;}
+
+  /* 모달 하단 버튼 */
+  .modal-footer{padding:14px 18px;border-top:2px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:#f8fafc;border-radius:0 0 12px 12px;}
+  .btn-save{background:var(--primary);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;}
+  .btn-save:hover{background:var(--primary-light);}
+  .btn-cancel{background:#f0f4f8;color:#555;border:1px solid var(--border);padding:10px 18px;border-radius:8px;font-size:.9rem;cursor:pointer;}
+  .btn-delete{background:#FDECEA;color:#C0392B;border:1px solid #E8B4B0;padding:10px 18px;border-radius:8px;font-size:.9rem;cursor:pointer;}
+
+  /* 달성률 배지 */
+  .achv-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;margin-left:6px;}
+  .achv-high{background:#C6EFCE;color:#1E4620;}
+  .achv-mid{background:#FFE699;color:#7E5500;}
+  .achv-low{background:#FCE4D6;color:#843C0C;}
+
+  /* 빠른입력 */
+  .quick-bar{background:#fff;border-bottom:2px solid var(--primary);padding:8px 20px;display:flex;gap:8px;align-items:center;}
+  .quick-bar label{font-size:.8rem;font-weight:700;color:var(--primary);white-space:nowrap;}
+  #quick-input{flex:1;border:1.5px solid #BDD7EE;border-radius:8px;padding:8px 12px;font-size:.88rem;font-family:inherit;}
+  #quick-input:focus{outline:none;border-color:var(--primary);}
+  .quick-hint{font-size:.72rem;color:#888;}
+  .quick-hint span{background:#f0f4f8;padding:2px 5px;border-radius:3px;font-family:monospace;margin:0 2px;}
+
+  @media(max-width:640px){
+    .ss-grid-4{grid-template-columns:1fr 1fr;}
+    .ss-grid-6{grid-template-columns:repeat(3,1fr);}
+    .ss-grid-3{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <h1>📺 방송 일정</h1>
+  <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+  <div class="month-label" id="month-label">2026년 3월</div>
+  <button class="nav-btn" onclick="changeMonth(1)">▶</button>
+  <span style="flex:1"></span>
+  <label class="hbtn hbtn-blue">📂 CSV 가져오기<input type="file" id="file-import" accept=".csv"></label>
+  <button class="hbtn hbtn-green" onclick="exportCSV()">💾 CSV 저장</button>
+</header>
+
+<!-- 빠른 입력 -->
+<div class="quick-bar">
+  <label>⚡ 빠른 입력</label>
+  <input id="quick-input" type="text" placeholder="예) 3/15 SK 알파 09:30 60분 목표2000   또는   15일 K올포 9:30 5000">
+  <button class="hbtn hbtn-blue" onclick="parseQuickInput()">추가 (Enter)</button>
+  <span class="quick-hint">힌트: <span>날짜</span><span>채널</span><span>아이템</span><span>시간</span><span>목표</span> 자유 입력</span>
+</div>
+
+<!-- 채널 필터 -->
+<div class="filter-bar" id="filter-bar">
+  <label>채널:</label>
+  <button class="ch-filter-btn active" data-ch="ALL" onclick="toggleFilter(this,'ALL')" style="background:#334E7C;color:#fff;">전체</button>
+</div>
+
+<!-- Calendar -->
+<div class="cal-wrapper">
+  <div class="cal-grid" id="calendar">
+    <div class="cal-hcell">월</div><div class="cal-hcell">화</div>
+    <div class="cal-hcell">수</div><div class="cal-hcell">목</div>
+    <div class="cal-hcell">금</div><div class="cal-hcell sat">토</div>
+    <div class="cal-hcell sun">일</div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar" id="stats-bar"></div>
+
+<!-- ═══════════════════════════════════════════
+     스프레드시트형 입력/수정 모달
+═══════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h2 id="modal-title">📋 방송 일정 추가</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+
+    <!-- 탭 -->
+    <div class="modal-tabs">
+      <div class="mtab active" onclick="switchTab(0)">📅 기본 정보</div>
+      <div class="mtab" onclick="switchTab(1)">📊 실적 입력</div>
+      <div class="mtab" onclick="switchTab(2)">💰 수익/비용</div>
+    </div>
+
+    <input type="hidden" id="edit-id">
+
+    <!-- 탭 0: 기본 정보 -->
+    <div class="ss-body" id="tab-0">
+      <div class="ss-section">
+        <div class="ss-section-title">방송 기본 정보</div>
+        <div class="ss-grid ss-grid-4" style="margin-bottom:10px;">
+          <div class="ss-field">
+            <label>날짜 <span class="req">*</span></label>
+            <input type="date" id="f-date">
+          </div>
+          <div class="ss-field">
+            <label>시작시간 <span class="req">*</span></label>
+            <input type="text" id="f-time" placeholder="09:30">
+          </div>
+          <div class="ss-field">
+            <label>방송시간(분)</label>
+            <input type="number" id="f-dur" value="60" min="10" max="300">
+          </div>
+          <div class="ss-field">
+            <label>요일</label>
+            <input type="text" id="f-weekday" readonly style="background:#f0f4f8;color:#888;">
+          </div>
+        </div>
+        <div class="ss-grid ss-grid-4">
+          <div class="ss-field">
+            <label>채널 <span class="req">*</span></label>
+            <select id="f-channel">
+              <option value="SK">SK스토아</option>
+              <option value="K">K쇼핑</option>
+              <option value="NS">NS홈쇼핑</option>
+              <option value="SSG">SSG닷컴</option>
+              <option value="W">W쇼핑</option>
+              <option value="현대">현대홈쇼핑</option>
+              <option value="현대+">현대홈쇼핑+</option>
+              <option value="홈앤">홈앤쇼핑</option>
+              <option value="CJ">CJ온스타일</option>
+              <option value="CJ+">CJ온스타일+</option>
+            </select>
+          </div>
+          <div class="ss-field">
+            <label>아이템 <span class="req">*</span></label>
+            <input type="text" id="f-item" list="item-list" placeholder="알파, 맥주, 올포...">
+            <datalist id="item-list">
+              <option value="알파"><option value="맥주"><option value="올포">
+              <option value="파라"><option value="블병"><option value="아세">
+              <option value="티큐"><option value="지오피">
+            </datalist>
+          </div>
+          <div class="ss-field">
+            <label>PD</label>
+            <input type="text" id="f-pd" placeholder="담당 PD">
+          </div>
+          <div class="ss-field">
+            <label>쇼호스트(SH)</label>
+            <input type="text" id="f-sh" placeholder="쇼호스트">
+          </div>
+        </div>
+      </div>
+
+      <div class="ss-divider"></div>
+
+      <div class="ss-section">
+        <div class="ss-section-title">PPL 정보</div>
+        <div class="ss-grid ss-grid-4">
+          <div class="ss-field">
+            <label>채널명(PPL)</label>
+            <input type="text" id="f-ppl-ch" placeholder="JTBC, tvN나비...">
+          </div>
+          <div class="ss-field">
+            <label>PPL 시작</label>
+            <input type="text" id="f-ppl-start" placeholder="09:00">
+          </div>
+          <div class="ss-field">
+            <label>PPL 종료</label>
+            <input type="text" id="f-ppl-end" placeholder="09:50">
+          </div>
+          <div class="ss-field">
+            <label>★/☆ 구분</label>
+            <select id="f-ppl-type">
+              <option value="">없음</option>
+              <option value="☆">☆ 연장/PPL</option>
+              <option value="★">★ 메인 PPL</option>
+            </select>
+          </div>
+        </div>
+        <div class="ss-grid ss-grid-2" style="margin-top:10px;">
+          <div class="ss-field">
+            <label>PPL 비용</label>
+            <input type="number" id="f-ppl-cost" placeholder="0">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>PPL 전체 텍스트 (자동 생성됨)</label>
+            <input type="text" id="f-ppl" readonly style="background:#f0f4f8;font-size:.8rem;color:#555;">
+          </div>
+        </div>
+      </div>
+
+      <div class="ss-divider"></div>
+
+      <div class="ss-section">
+        <div class="ss-section-title">목표</div>
+        <div class="ss-grid ss-grid-4">
+          <div class="ss-field">
+            <label>홈쇼핑 목표(원)</label>
+            <input type="number" id="f-target-revenue" placeholder="38000000">
+          </div>
+          <div class="ss-field">
+            <label>목표 수량 (일반)</label>
+            <input type="number" id="f-target-n" placeholder="1500">
+          </div>
+          <div class="ss-field">
+            <label>목표 수량 (높음)</label>
+            <input type="number" id="f-target-h" placeholder="2000">
+          </div>
+          <div class="ss-field">
+            <label>비고</label>
+            <input type="text" id="f-note" placeholder="메모">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 탭 1: 실적 입력 -->
+    <div class="ss-body hidden" id="tab-1">
+      <div class="ss-section">
+        <div class="ss-section-title">주문 수량</div>
+        <div class="ss-grid ss-grid-3">
+          <div class="ss-field">
+            <label>주문수량 (싱글)</label>
+            <input type="number" id="f-order-s" placeholder="0" oninput="calcOrderTotal()">
+          </div>
+          <div class="ss-field">
+            <label>주문수량 (더블)</label>
+            <input type="number" id="f-order-d" placeholder="0" oninput="calcOrderTotal()">
+          </div>
+          <div class="ss-field">
+            <label>주문수량 합계</label>
+            <input type="number" id="f-order-t" class="auto-calc" placeholder="자동계산">
+          </div>
+        </div>
+      </div>
+      <div class="ss-divider"></div>
+      <div class="ss-section">
+        <div class="ss-section-title">실출고</div>
+        <div class="ss-grid ss-grid-3">
+          <div class="ss-field">
+            <label>실출고 (싱글)</label>
+            <input type="number" id="f-ship-s" placeholder="0" oninput="calcShipTotal()">
+          </div>
+          <div class="ss-field">
+            <label>실출고 (더블)</label>
+            <input type="number" id="f-ship-d" placeholder="0" oninput="calcShipTotal()">
+          </div>
+          <div class="ss-field">
+            <label>실출고 합계</label>
+            <input type="number" id="f-ship-t" class="auto-calc" placeholder="자동계산">
+          </div>
+        </div>
+      </div>
+      <div class="ss-divider"></div>
+      <div class="ss-section">
+        <div class="ss-section-title">매출 / 달성률</div>
+        <div class="ss-grid ss-grid-4">
+          <div class="ss-field">
+            <label>전환율</label>
+            <input type="text" id="f-conversion" placeholder="82%">
+          </div>
+          <div class="ss-field">
+            <label>주문금액 (원)</label>
+            <input type="number" id="f-order-amt" placeholder="0" oninput="calcAchievement()">
+          </div>
+          <div class="ss-field">
+            <label>달성율 (홈쇼핑기준)</label>
+            <input type="text" id="f-achievement" class="auto-calc" placeholder="자동계산">
+          </div>
+          <div class="ss-field">
+            <label>사업계획 달성율</label>
+            <input type="text" id="f-bp-achv" placeholder="계산값 입력">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 탭 2: 수익/비용 -->
+    <div class="ss-body hidden" id="tab-2">
+      <div class="ss-section">
+        <div class="ss-section-title">판매가</div>
+        <div class="ss-grid ss-grid-4">
+          <div class="ss-field">
+            <label>판매가 (싱글)</label>
+            <input type="number" id="f-price-s" placeholder="99000">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>판매가 (더블)</label>
+            <input type="number" id="f-price-d" placeholder="148000">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>수수료 (싱글)</label>
+            <input type="text" id="f-fee-s" placeholder="35.00%">
+          </div>
+          <div class="ss-field">
+            <label>수수료 (더블)</label>
+            <input type="text" id="f-fee-d" placeholder="35.00%">
+          </div>
+        </div>
+      </div>
+      <div class="ss-divider"></div>
+      <div class="ss-section">
+        <div class="ss-section-title">원가 / 비용</div>
+        <div class="ss-grid ss-grid-4">
+          <div class="ss-field">
+            <label>공급단가 (싱글)</label>
+            <input type="number" id="f-supply-s" placeholder="58500">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>공급단가 (더블)</label>
+            <input type="number" id="f-supply-d" placeholder="87455">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>배송료</label>
+            <input type="number" id="f-delivery" placeholder="0">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>원가</label>
+            <input type="number" id="f-cost" placeholder="0">
+            <span class="unit">원</span>
+          </div>
+        </div>
+        <div class="ss-grid ss-grid-4" style="margin-top:10px;">
+          <div class="ss-field">
+            <label>홈쇼핑 광고비</label>
+            <input type="number" id="f-ad-cost" placeholder="0">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>기타비용</label>
+            <input type="number" id="f-other-cost" placeholder="0">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>게스트비용</label>
+            <input type="number" id="f-guest-cost" placeholder="0">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>판관비</label>
+            <input type="number" id="f-sg-cost" placeholder="0">
+            <span class="unit">원</span>
+          </div>
+        </div>
+      </div>
+      <div class="ss-divider"></div>
+      <div class="ss-section">
+        <div class="ss-section-title">이익</div>
+        <div class="ss-grid ss-grid-4">
+          <div class="ss-field">
+            <label>이익금</label>
+            <input type="number" id="f-profit" placeholder="0">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>사업계획 이익금 목표</label>
+            <input type="number" id="f-bp-profit" placeholder="0">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label>사업계획 달성차액</label>
+            <input type="number" id="f-bp-diff" class="auto-calc" placeholder="자동계산">
+            <span class="unit">원</span>
+          </div>
+          <div class="ss-field">
+            <label></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 모달 하단 -->
+    <div class="modal-footer">
+      <button class="btn-delete" id="btn-delete" onclick="deleteEntry()" style="display:none;margin-right:auto;">🗑 삭제</button>
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-save" onclick="saveEntry()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// 데이터
+// ═══════════════════════════════════════════════════════
+let broadcasts = [{"id": "2026-03-03_06:30_SK", "year": 2026, "month": 3, "date": 3, "date_str": "2026-03-03", "weekday": "화", "time": "06:30", "duration": 60, "channel": "SK", "item": "알파", "ppl": "☆연장전(06:00~06:30)", "target_normal": 1350, "target_high": 1500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-05_06:30_SK", "year": 2026, "month": 3, "date": 5, "date_str": "2026-03-05", "weekday": "목", "time": "06:30", "duration": 60, "channel": "SK", "item": "맥주", "ppl": "", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-07_06:20_SK", "year": 2026, "month": 3, "date": 7, "date_str": "2026-03-07", "weekday": "토", "time": "06:20", "duration": 60, "channel": "SK", "item": "알파", "ppl": "", "target_normal": 2300, "target_high": 2500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-08_09:30_K", "year": 2026, "month": 3, "date": 8, "date_str": "2026-03-08", "weekday": "일", "time": "09:30", "duration": 75, "channel": "K", "item": "올포", "ppl": "★J 지킬박사 (09:30~10:20)", "target_normal": 5060, "target_high": 5500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-05_08:30_K", "year": 2026, "month": 3, "date": 5, "date_str": "2026-03-05", "weekday": "목", "time": "08:30", "duration": 60, "channel": "K", "item": "올포", "ppl": "☆어벤저스(08:00~08:50)", "target_normal": 1800, "target_high": 2000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-07_10:30_SSG", "year": 2026, "month": 3, "date": 7, "date_str": "2026-03-07", "weekday": "토", "time": "10:30", "duration": 60, "channel": "SSG", "item": "맥주", "ppl": "☆어벤져스(09:55~10:40)", "target_normal": 2700, "target_high": 3000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-05_25:38_SSG", "year": 2026, "month": 3, "date": 5, "date_str": "2026-03-05", "weekday": "목", "time": "25:38", "duration": 60, "channel": "SSG", "item": "올포", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-06_19:35_NS", "year": 2026, "month": 3, "date": 6, "date_str": "2026-03-06", "weekday": "금", "time": "19:35", "duration": 60, "channel": "NS", "item": "올포", "ppl": "☆명의보감(19:00~19:50)", "target_normal": 4950, "target_high": 5500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-04_19:30_SSG", "year": 2026, "month": 3, "date": 4, "date_str": "2026-03-04", "weekday": "수", "time": "19:30", "duration": 60, "channel": "SSG", "item": "알파", "ppl": "★조선 연장전(19:10~20:00)", "target_normal": 5980, "target_high": 6500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-05_24:35_K", "year": 2026, "month": 3, "date": 5, "date_str": "2026-03-05", "weekday": "목", "time": "24:35", "duration": 60, "channel": "K", "item": "올포", "ppl": "", "target_normal": 1380, "target_high": 1500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-06_25:00_NS", "year": 2026, "month": 3, "date": 6, "date_str": "2026-03-06", "weekday": "금", "time": "25:00", "duration": 40, "channel": "NS", "item": "블병", "ppl": "", "target_normal": 44, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-11_06:30_K", "year": 2026, "month": 3, "date": 11, "date_str": "2026-03-11", "weekday": "수", "time": "06:30", "duration": 60, "channel": "K", "item": "파라", "ppl": "☆건식당(06:00~06:50)", "target_normal": 1800, "target_high": 2000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-12_05:30_SK", "year": 2026, "month": 3, "date": 12, "date_str": "2026-03-12", "weekday": "목", "time": "05:30", "duration": 60, "channel": "SK", "item": "맥주", "ppl": "", "target_normal": 500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-13_06:15_W", "year": 2026, "month": 3, "date": 13, "date_str": "2026-03-13", "weekday": "금", "time": "06:15", "duration": 60, "channel": "W", "item": "맥주", "ppl": "", "target_normal": 1000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-15_05:20_SK", "year": 2026, "month": 3, "date": 15, "date_str": "2026-03-15", "weekday": "일", "time": "05:20", "duration": 50, "channel": "SK", "item": "파라", "ppl": "", "target_normal": 920, "target_high": 1000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-10_09:30_SK", "year": 2026, "month": 3, "date": 10, "date_str": "2026-03-10", "weekday": "화", "time": "09:30", "duration": 60, "channel": "SK", "item": "맥주", "ppl": "", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-12_08:30_SSG", "year": 2026, "month": 3, "date": 12, "date_str": "2026-03-12", "weekday": "목", "time": "08:30", "duration": 60, "channel": "SSG", "item": "맥주", "ppl": "☆어벤저스(08:00~08:50)", "target_normal": 1800, "target_high": 2000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-15_10:00_홈앤", "year": 2026, "month": 3, "date": 15, "date_str": "2026-03-15", "weekday": "일", "time": "10:00", "duration": 75, "channel": "홈앤", "item": "파라", "ppl": "☆J 지킬박사 (09:30~10:20)", "target_normal": 4950, "target_high": 5500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-09_20:30_K", "year": 2026, "month": 3, "date": 9, "date_str": "2026-03-09", "weekday": "월", "time": "20:30", "duration": 60, "channel": "K", "item": "파라", "ppl": "☆건식당(20:00~20:50)", "target_normal": 4050, "target_high": 4500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-09_24:30_K", "year": 2026, "month": 3, "date": 9, "date_str": "2026-03-09", "weekday": "월", "time": "24:30", "duration": 60, "channel": "K", "item": "파라", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-10_25:20_현대+", "year": 2026, "month": 3, "date": 10, "date_str": "2026-03-10", "weekday": "화", "time": "25:20", "duration": 40, "channel": "현대+", "item": "알파", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-11_24:45_CJ+", "year": 2026, "month": 3, "date": 11, "date_str": "2026-03-11", "weekday": "수", "time": "24:45", "duration": 40, "channel": "CJ+", "item": "맥주", "ppl": "", "target_normal": 52, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-12_20:30_SSG", "year": 2026, "month": 3, "date": 12, "date_str": "2026-03-12", "weekday": "목", "time": "20:30", "duration": 60, "channel": "SSG", "item": "파라", "ppl": "★질병법칙(20:10~21:00)", "target_normal": 5520, "target_high": 6000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-09_25:00_현대", "year": 2026, "month": 3, "date": 9, "date_str": "2026-03-09", "weekday": "월", "time": "25:00", "duration": 60, "channel": "현대", "item": "파라", "ppl": "", "target_normal": 1380, "target_high": 1500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-10_25:00_SSG", "year": 2026, "month": 3, "date": 10, "date_str": "2026-03-10", "weekday": "화", "time": "25:00", "duration": 60, "channel": "SSG", "item": "알파", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1080, "target_high": 1200, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-11_25:00_SK", "year": 2026, "month": 3, "date": 11, "date_str": "2026-03-11", "weekday": "수", "time": "25:00", "duration": 60, "channel": "SK", "item": "맥주", "ppl": "", "target_normal": 1000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-12_25:00_홈앤", "year": 2026, "month": 3, "date": 12, "date_str": "2026-03-12", "weekday": "목", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "파라", "ppl": "", "target_normal": 1380, "target_high": 1500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-15_25:00_CJ", "year": 2026, "month": 3, "date": 15, "date_str": "2026-03-15", "weekday": "일", "time": "25:00", "duration": 60, "channel": "CJ", "item": "알파", "ppl": "★조선 스페셜(24:30~25:20)", "target_normal": 1320, "target_high": 1500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-17_05:30_현대", "year": 2026, "month": 3, "date": 17, "date_str": "2026-03-17", "weekday": "화", "time": "05:30", "duration": 60, "channel": "현대", "item": "파라", "ppl": "☆건식당(05:00~05:50)", "target_normal": 450, "target_high": 500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-19_05:30_SSG", "year": 2026, "month": 3, "date": 19, "date_str": "2026-03-19", "weekday": "목", "time": "05:30", "duration": 60, "channel": "SSG", "item": "맥주", "ppl": "", "target_normal": 500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-20_09:30_K", "year": 2026, "month": 3, "date": 20, "date_str": "2026-03-20", "weekday": "금", "time": "09:30", "duration": 60, "channel": "K", "item": "파라", "ppl": "☆tvN나비(09:00~09:50)", "target_normal": 5062, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-16_25:20_현대+", "year": 2026, "month": 3, "date": 16, "date_str": "2026-03-16", "weekday": "월", "time": "25:20", "duration": 40, "channel": "현대+", "item": "알파", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-17_06:30_SSG", "year": 2026, "month": 3, "date": 17, "date_str": "2026-03-17", "weekday": "화", "time": "06:30", "duration": 60, "channel": "SSG", "item": "올포", "ppl": "", "target_normal": 1840, "target_high": 2000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-18_11:35_NS", "year": 2026, "month": 3, "date": 18, "date_str": "2026-03-18", "weekday": "수", "time": "11:35", "duration": 60, "channel": "NS", "item": "파라", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-16_24:30_K", "year": 2026, "month": 3, "date": 16, "date_str": "2026-03-16", "weekday": "월", "time": "24:30", "duration": 60, "channel": "K", "item": "올포", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-19_25:20_현대+", "year": 2026, "month": 3, "date": 19, "date_str": "2026-03-19", "weekday": "목", "time": "25:20", "duration": 40, "channel": "현대+", "item": "파라", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-16_25:00_NS", "year": 2026, "month": 3, "date": 16, "date_str": "2026-03-16", "weekday": "월", "time": "25:00", "duration": 40, "channel": "NS", "item": "올포", "ppl": "☆명의보감(24:30~25:20)", "target_normal": 1350, "target_high": 1500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-19_25:00_홈앤", "year": 2026, "month": 3, "date": 19, "date_str": "2026-03-19", "weekday": "목", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "파라", "ppl": "", "target_normal": 1000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-24_06:30_SK", "year": 2026, "month": 3, "date": 24, "date_str": "2026-03-24", "weekday": "화", "time": "06:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "☆J 지킬박사 (06:00~06:50)", "target_normal": 1800, "target_high": 2000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-25_06:15_현대", "year": 2026, "month": 3, "date": 25, "date_str": "2026-03-25", "weekday": "수", "time": "06:15", "duration": 60, "channel": "현대", "item": "파라", "ppl": "☆건식당(06:00~06:50)", "target_normal": 1800, "target_high": 2000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-26_05:30_SK", "year": 2026, "month": 3, "date": 26, "date_str": "2026-03-26", "weekday": "목", "time": "05:30", "duration": 60, "channel": "SK", "item": "올포", "ppl": "", "target_normal": 500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-28_07:20_SSG", "year": 2026, "month": 3, "date": 28, "date_str": "2026-03-28", "weekday": "토", "time": "07:20", "duration": 60, "channel": "SSG", "item": "파라", "ppl": "☆썰록(07:20~08:00)", "target_normal": 4950, "target_high": 5500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-29_06:40_K", "year": 2026, "month": 3, "date": 29, "date_str": "2026-03-29", "weekday": "일", "time": "06:40", "duration": 60, "channel": "K", "item": "맥주", "ppl": "", "target_normal": 2500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-26_06:00_홈앤", "year": 2026, "month": 3, "date": 26, "date_str": "2026-03-26", "weekday": "목", "time": "06:00", "duration": 60, "channel": "홈앤", "item": "파라", "ppl": "☆tvN나비(06:00~06:50)", "target_normal": 1800, "target_high": 2000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-29_07:40_K", "year": 2026, "month": 3, "date": 29, "date_str": "2026-03-29", "weekday": "일", "time": "07:40", "duration": 60, "channel": "K", "item": "파라", "ppl": "★조선다큐(07:30~08:20)", "target_normal": 4600, "target_high": 5000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-26_24:30_K", "year": 2026, "month": 3, "date": 26, "date_str": "2026-03-26", "weekday": "목", "time": "24:30", "duration": 60, "channel": "K", "item": "알파", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-29_25:00_현대", "year": 2026, "month": 3, "date": 29, "date_str": "2026-03-29", "weekday": "일", "time": "25:00", "duration": 60, "channel": "현대", "item": "알파(상생)", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-23_20:30_SK", "year": 2026, "month": 3, "date": 23, "date_str": "2026-03-23", "weekday": "월", "time": "20:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "☆건식당(20:00~20:50)", "target_normal": 4050, "target_high": 4500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-24_20:30_SK", "year": 2026, "month": 3, "date": 24, "date_str": "2026-03-24", "weekday": "화", "time": "20:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "★채널A 몸신(20:10~21:00)", "target_normal": 5060, "target_high": 5500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-25_19:30_SK", "year": 2026, "month": 3, "date": 25, "date_str": "2026-03-25", "weekday": "수", "time": "19:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "★조선 연장전(19:10~20:00)", "target_normal": 5980, "target_high": 6500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-26_25:00_CJ", "year": 2026, "month": 3, "date": 26, "date_str": "2026-03-26", "weekday": "목", "time": "25:00", "duration": 60, "channel": "CJ", "item": "알파", "ppl": "", "target_normal": 1380, "target_high": 1500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-29_25:00_CJ", "year": 2026, "month": 3, "date": 29, "date_str": "2026-03-29", "weekday": "일", "time": "25:00", "duration": 60, "channel": "CJ", "item": "알파 형성", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-31_05:30_K", "year": 2026, "month": 3, "date": 31, "date_str": "2026-03-31", "weekday": "화", "time": "05:30", "duration": 60, "channel": "K", "item": "파라", "ppl": "☆건식당(05:00~05:50)", "target_normal": 450, "target_high": 500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-04_06:20_SK", "year": 2026, "month": 3, "date": 4, "date_str": "2026-03-04", "weekday": "토", "time": "06:20", "duration": 60, "channel": "SK", "item": "파라", "ppl": "", "target_normal": 2300, "target_high": 2500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-02_11:30_현대", "year": 2026, "month": 3, "date": 2, "date_str": "2026-03-02", "weekday": "목", "time": "11:30", "duration": 60, "channel": "현대", "item": "파라", "ppl": "☆썰록(11:15~12:00)", "target_normal": 1800, "target_high": 2000, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-05_10:00_SSG", "year": 2026, "month": 3, "date": 5, "date_str": "2026-03-05", "weekday": "일", "time": "10:00", "duration": 75, "channel": "SSG", "item": "파라", "ppl": "☆J 지킬박사 (09:30~10:20)", "target_normal": 4950, "target_high": 5500, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-31_24:30_K", "year": 2026, "month": 3, "date": 31, "date_str": "2026-03-31", "weekday": "화", "time": "24:30", "duration": 60, "channel": "K", "item": "맥주", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-01_25:30_SK", "year": 2026, "month": 3, "date": 1, "date_str": "2026-03-01", "weekday": "수", "time": "25:30", "duration": 60, "channel": "SK", "item": "알파", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-31_25:00_홈앤", "year": 2026, "month": 3, "date": 31, "date_str": "2026-03-31", "weekday": "화", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "맥주", "ppl": "", "target_normal": 1000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-03-01_24:30_K", "year": 2026, "month": 3, "date": 1, "date_str": "2026-03-01", "weekday": "수", "time": "24:30", "duration": 60, "channel": "K", "item": "알파", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1200, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-07_05:00_NS", "year": 2026, "month": 4, "date": 7, "date_str": "2026-04-07", "weekday": "화", "time": "05:00", "duration": 40, "channel": "NS", "item": "올포", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-08_06:30_K", "year": 2026, "month": 4, "date": 8, "date_str": "2026-04-08", "weekday": "수", "time": "06:30", "duration": 60, "channel": "K", "item": "알파", "ppl": "☆건식당(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-10_05:30_SK", "year": 2026, "month": 4, "date": 10, "date_str": "2026-04-10", "weekday": "금", "time": "05:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-07_06:15_SSG", "year": 2026, "month": 4, "date": 7, "date_str": "2026-04-07", "weekday": "화", "time": "06:15", "duration": 60, "channel": "SSG", "item": "파라", "ppl": "", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-07_09:30_SK", "year": 2026, "month": 4, "date": 7, "date_str": "2026-04-07", "weekday": "화", "time": "09:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "", "target_normal": 2500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-07_25:20_현대+", "year": 2026, "month": 4, "date": 7, "date_str": "2026-04-07", "weekday": "화", "time": "25:20", "duration": 40, "channel": "현대+", "item": "파라", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-10_20:30_SSG", "year": 2026, "month": 4, "date": 10, "date_str": "2026-04-10", "weekday": "금", "time": "20:30", "duration": 60, "channel": "SSG", "item": "알파", "ppl": "★나이야가라(20:00~20:50)", "target_normal": 4000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-06_20:30_SK", "year": 2026, "month": 4, "date": 6, "date_str": "2026-04-06", "weekday": "월", "time": "20:30", "duration": 60, "channel": "SK", "item": "알파 > SSG", "ppl": "☆건식당(20:00~20:50)", "target_normal": 4500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-07_25:00_홈앤", "year": 2026, "month": 4, "date": 7, "date_str": "2026-04-07", "weekday": "화", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "파라", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-10_25:00_홈앤", "year": 2026, "month": 4, "date": 10, "date_str": "2026-04-10", "weekday": "금", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "올포", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-14_05:30_K", "year": 2026, "month": 4, "date": 14, "date_str": "2026-04-14", "weekday": "화", "time": "05:30", "duration": 60, "channel": "K", "item": "알파", "ppl": "☆건식당(05:00~05:50) 500", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-17_09:25_홈앤", "year": 2026, "month": 4, "date": 17, "date_str": "2026-04-17", "weekday": "금", "time": "09:25", "duration": 60, "channel": "홈앤", "item": "아세", "ppl": "☆tvN나비(09:00~09:50)", "target_normal": 5625, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-18_05:20_SK", "year": 2026, "month": 4, "date": 18, "date_str": "2026-04-18", "weekday": "토", "time": "05:20", "duration": 60, "channel": "SK", "item": "알파", "ppl": "", "target_normal": 1000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-19_05:20_SK", "year": 2026, "month": 4, "date": 19, "date_str": "2026-04-19", "weekday": "일", "time": "05:20", "duration": 50, "channel": "SK", "item": "파라", "ppl": "", "target_normal": 1000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-14_06:30_SK", "year": 2026, "month": 4, "date": 14, "date_str": "2026-04-14", "weekday": "화", "time": "06:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "☆J 지킬박사 (06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-18_07:20_SK", "year": 2026, "month": 4, "date": 18, "date_str": "2026-04-18", "weekday": "토", "time": "07:20", "duration": 60, "channel": "SK", "item": "아세", "ppl": "★셜록(07:20~08:00)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-19_07:20_SK", "year": 2026, "month": 4, "date": 19, "date_str": "2026-04-19", "weekday": "일", "time": "07:20", "duration": 60, "channel": "SK", "item": "파라", "ppl": "★중독자들(07:30~08:20)", "target_normal": 6000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-16_20:35_SK", "year": 2026, "month": 4, "date": 16, "date_str": "2026-04-16", "weekday": "목", "time": "20:35", "duration": 65, "channel": "SK", "item": "파라", "ppl": "★질병법칙(20:10~21:00)", "target_normal": 6000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-18_10:30_SSG", "year": 2026, "month": 4, "date": 18, "date_str": "2026-04-18", "weekday": "토", "time": "10:30", "duration": 65, "channel": "SSG", "item": "파라", "ppl": "★어벤져스(09:55~10:40)", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-15_19:30_현대", "year": 2026, "month": 4, "date": 15, "date_str": "2026-04-15", "weekday": "수", "time": "19:30", "duration": 75, "channel": "현대", "item": "아세", "ppl": "★조선 연장전(19:10~20:00)", "target_normal": 6500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-16_24:30_SK", "year": 2026, "month": 4, "date": 16, "date_str": "2026-04-16", "weekday": "목", "time": "24:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-17_24:30_SK", "year": 2026, "month": 4, "date": 17, "date_str": "2026-04-17", "weekday": "금", "time": "24:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-15_25:00_SSG", "year": 2026, "month": 4, "date": 15, "date_str": "2026-04-15", "weekday": "수", "time": "25:00", "duration": 60, "channel": "SSG", "item": "맥주", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1200, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-16_25:00_홈앤", "year": 2026, "month": 4, "date": 16, "date_str": "2026-04-16", "weekday": "목", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "파라", "ppl": "", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-17_24:30_K", "year": 2026, "month": 4, "date": 17, "date_str": "2026-04-17", "weekday": "금", "time": "24:30", "duration": 60, "channel": "K", "item": "파라", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-22_06:30_SSG", "year": 2026, "month": 4, "date": 22, "date_str": "2026-04-22", "weekday": "수", "time": "06:30", "duration": 60, "channel": "SSG", "item": "파라", "ppl": "☆건식당(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-23_06:30_CJ", "year": 2026, "month": 4, "date": 23, "date_str": "2026-04-23", "weekday": "목", "time": "06:30", "duration": 60, "channel": "CJ", "item": "파라", "ppl": "", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-26_07:50_현대", "year": 2026, "month": 4, "date": 26, "date_str": "2026-04-26", "weekday": "일", "time": "07:50", "duration": 60, "channel": "현대", "item": "파라", "ppl": "☆조선다큐(07:30~08:20)", "target_normal": 5000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-23_06:30_홈앤", "year": 2026, "month": 4, "date": 23, "date_str": "2026-04-23", "weekday": "목", "time": "06:30", "duration": 60, "channel": "홈앤", "item": "아세", "ppl": "☆tvN나비(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-26_08:40_K", "year": 2026, "month": 4, "date": 26, "date_str": "2026-04-26", "weekday": "일", "time": "08:40", "duration": 80, "channel": "K", "item": "아세", "ppl": "☆JTBC다큐(08:30~09:20)", "target_normal": 6000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-23_08:30_SK", "year": 2026, "month": 4, "date": 23, "date_str": "2026-04-23", "weekday": "목", "time": "08:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-20_20:30_SK", "year": 2026, "month": 4, "date": 20, "date_str": "2026-04-20", "weekday": "월", "time": "20:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "☆건식당(20:00~20:50)", "target_normal": 5000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-21_25:00_CJ", "year": 2026, "month": 4, "date": 21, "date_str": "2026-04-21", "weekday": "화", "time": "25:00", "duration": 60, "channel": "CJ", "item": "알파", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-23_11:35_NS", "year": 2026, "month": 4, "date": 23, "date_str": "2026-04-23", "weekday": "목", "time": "11:35", "duration": 60, "channel": "NS", "item": "아세", "ppl": "", "target_normal": 2500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-24_19:30_현대", "year": 2026, "month": 4, "date": 24, "date_str": "2026-04-24", "weekday": "금", "time": "19:30", "duration": 75, "channel": "현대", "item": "파라", "ppl": "☆명의보감(19:00~19:50)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-28_05:30_SK", "year": 2026, "month": 4, "date": 28, "date_str": "2026-04-28", "weekday": "화", "time": "05:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "☆건식당(05:00~05:50)", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-29_06:30_SK", "year": 2026, "month": 4, "date": 29, "date_str": "2026-04-29", "weekday": "수", "time": "06:30", "duration": 60, "channel": "SK", "item": "아세", "ppl": "☆JTBC다큐(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-02_10:20_SSG", "year": 2026, "month": 4, "date": 2, "date_str": "2026-04-02", "weekday": "토", "time": "10:20", "duration": 60, "channel": "SSG", "item": "맥주", "ppl": "☆어벤져스(09:55~10:40)", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-03_10:00_NS", "year": 2026, "month": 4, "date": 3, "date_str": "2026-04-03", "weekday": "일", "time": "10:00", "duration": 60, "channel": "NS", "item": "파라", "ppl": "☆A 잘살면(09:30~10:20)", "target_normal": 4500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-29_13:30_NS", "year": 2026, "month": 4, "date": 29, "date_str": "2026-04-29", "weekday": "수", "time": "13:30", "duration": 60, "channel": "NS", "item": "파라", "ppl": "☆A 잘살면(13:20~14:10)", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-29_25:00_CJ", "year": 2026, "month": 4, "date": 29, "date_str": "2026-04-29", "weekday": "수", "time": "25:00", "duration": 60, "channel": "CJ", "item": "+ 알파", "ppl": "", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-28_25:00_홈앤", "year": 2026, "month": 4, "date": 28, "date_str": "2026-04-28", "weekday": "화", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "맥비", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-29_25:00_K", "year": 2026, "month": 4, "date": 29, "date_str": "2026-04-29", "weekday": "수", "time": "25:00", "duration": 60, "channel": "K", "item": "알파", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1200, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-04-01_25:00_홈앤", "year": 2026, "month": 4, "date": 1, "date_str": "2026-04-01", "weekday": "금", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "알파", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-04_10:35_현대", "year": 2026, "month": 5, "date": 4, "date_str": "2026-05-04", "weekday": "월", "time": "10:35", "duration": 60, "channel": "현대", "item": "파라", "ppl": "★연장전(10:30~11:10)", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-05_06:15_현대", "year": 2026, "month": 5, "date": 5, "date_str": "2026-05-05", "weekday": "화", "time": "06:15", "duration": 60, "channel": "현대", "item": "파라", "ppl": "☆조선다큐(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-06_06:30_NS", "year": 2026, "month": 5, "date": 6, "date_str": "2026-05-06", "weekday": "수", "time": "06:30", "duration": 60, "channel": "NS", "item": "아세", "ppl": "☆건식당(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-07_08:30_SK", "year": 2026, "month": 5, "date": 7, "date_str": "2026-05-07", "weekday": "목", "time": "08:30", "duration": 60, "channel": "SK", "item": "맥주 > SSG", "ppl": "☆어벤저스(08:00~08:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-08_09:30_K", "year": 2026, "month": 5, "date": 8, "date_str": "2026-05-08", "weekday": "금", "time": "09:30", "duration": 60, "channel": "K", "item": "아세", "ppl": "", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-09_07:30_현대", "year": 2026, "month": 5, "date": 9, "date_str": "2026-05-09", "weekday": "토", "time": "07:30", "duration": 60, "channel": "현대", "item": "아세", "ppl": "★셜록(07:20~08:00)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-04_20:30_SK", "year": 2026, "month": 5, "date": 4, "date_str": "2026-05-04", "weekday": "월", "time": "20:30", "duration": 60, "channel": "SK", "item": "아세", "ppl": "☆건식당(20:00~20:50)", "target_normal": 4500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-08_09:25_홈앤", "year": 2026, "month": 5, "date": 8, "date_str": "2026-05-08", "weekday": "금", "time": "09:25", "duration": 60, "channel": "홈앤", "item": "파라", "ppl": "☆tvN나비(09:00~09:50)", "target_normal": 5625, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-09_10:30_NS", "year": 2026, "month": 5, "date": 9, "date_str": "2026-05-09", "weekday": "토", "time": "10:30", "duration": 60, "channel": "NS", "item": "올포", "ppl": "☆어벤져스(09:55~10:40)", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-04_25:00_홈앤", "year": 2026, "month": 5, "date": 4, "date_str": "2026-05-04", "weekday": "월", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "파라", "ppl": "☆명의보감(24:30~25:20)", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-05_24:30_SSG", "year": 2026, "month": 5, "date": 5, "date_str": "2026-05-05", "weekday": "화", "time": "24:30", "duration": 60, "channel": "SSG", "item": "올포", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-06_19:35_SSG", "year": 2026, "month": 5, "date": 6, "date_str": "2026-05-06", "weekday": "수", "time": "19:35", "duration": 60, "channel": "SSG", "item": "아세", "ppl": "★조선 연장전(19:00~19:50)", "target_normal": 6500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-07_25:00_현대", "year": 2026, "month": 5, "date": 7, "date_str": "2026-05-07", "weekday": "목", "time": "25:00", "duration": 60, "channel": "현대", "item": "아세", "ppl": "", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-12_05:30_SSG", "year": 2026, "month": 5, "date": 12, "date_str": "2026-05-12", "weekday": "화", "time": "05:30", "duration": 60, "channel": "SSG", "item": "아세 > 파라", "ppl": "☆건식당(05:00~05:50) 500", "target_normal": null, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-13_06:15_현대", "year": 2026, "month": 5, "date": 13, "date_str": "2026-05-13", "weekday": "수", "time": "06:15", "duration": 60, "channel": "현대", "item": "파라", "ppl": "☆건식당(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-14_06:30_SK", "year": 2026, "month": 5, "date": 14, "date_str": "2026-05-14", "weekday": "목", "time": "06:30", "duration": 60, "channel": "SK", "item": "파라", "ppl": "☆tvN나비(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-15_10:30_홈앤", "year": 2026, "month": 5, "date": 15, "date_str": "2026-05-15", "weekday": "금", "time": "10:30", "duration": 60, "channel": "홈앤", "item": "아세", "ppl": "☆역전의한방(10:30~11:10)", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-14_08:30_NS", "year": 2026, "month": 5, "date": 14, "date_str": "2026-05-14", "weekday": "목", "time": "08:30", "duration": 60, "channel": "NS", "item": "올포", "ppl": "☆어벤저스(08:00~08:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-16_10:20_SSG", "year": 2026, "month": 5, "date": 16, "date_str": "2026-05-16", "weekday": "토", "time": "10:20", "duration": 65, "channel": "SSG", "item": "아세", "ppl": "★어벤져스(09:55~10:40)", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-12_20:30_SK", "year": 2026, "month": 5, "date": 12, "date_str": "2026-05-12", "weekday": "화", "time": "20:30", "duration": 60, "channel": "SK", "item": "아세", "ppl": "☆채널A 몸신(20:10~21:00)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-14_11:30_현대", "year": 2026, "month": 5, "date": 14, "date_str": "2026-05-14", "weekday": "목", "time": "11:30", "duration": 60, "channel": "현대", "item": "아세", "ppl": "", "target_normal": 2500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-11_20:30_SSG", "year": 2026, "month": 5, "date": 11, "date_str": "2026-05-11", "weekday": "월", "time": "20:30", "duration": 60, "channel": "SSG", "item": "파라", "ppl": "☆건식당(20:00~20:50)", "target_normal": 4500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-12_25:00_홈앤", "year": 2026, "month": 5, "date": 12, "date_str": "2026-05-12", "weekday": "화", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "알파", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-15_25:00_홈앤", "year": 2026, "month": 5, "date": 15, "date_str": "2026-05-15", "weekday": "금", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "파라", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-19_05:30_SSG", "year": 2026, "month": 5, "date": 19, "date_str": "2026-05-19", "weekday": "화", "time": "05:30", "duration": 60, "channel": "SSG", "item": "파라", "ppl": "☆건식당(05:00~05:50)", "target_normal": 500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-21_08:25_SK", "year": 2026, "month": 5, "date": 21, "date_str": "2026-05-21", "weekday": "목", "time": "08:25", "duration": 60, "channel": "SK", "item": "아세", "ppl": "", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-22_05:30_K", "year": 2026, "month": 5, "date": 22, "date_str": "2026-05-22", "weekday": "금", "time": "05:30", "duration": 60, "channel": "K", "item": "알파", "ppl": "", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-23_06:30_NS", "year": 2026, "month": 5, "date": 23, "date_str": "2026-05-23", "weekday": "토", "time": "06:30", "duration": 60, "channel": "NS", "item": "아세", "ppl": "☆채널A 몸신(06:00~06:50)", "target_normal": 2500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-24_10:00_홈앤", "year": 2026, "month": 5, "date": 24, "date_str": "2026-05-24", "weekday": "일", "time": "10:00", "duration": 75, "channel": "홈앤", "item": "아세", "ppl": "★J 지킬박사 (09:30~10:20)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-18_10:35_CJ", "year": 2026, "month": 5, "date": 18, "date_str": "2026-05-18", "weekday": "월", "time": "10:35", "duration": 60, "channel": "CJ", "item": "파라", "ppl": "★연장전(10:30~11:10)", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-19_09:30_홈앤", "year": 2026, "month": 5, "date": 19, "date_str": "2026-05-19", "weekday": "화", "time": "09:30", "duration": 60, "channel": "홈앤", "item": "알파", "ppl": "", "target_normal": 2500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-22_19:35_NS", "year": 2026, "month": 5, "date": 22, "date_str": "2026-05-22", "weekday": "금", "time": "19:35", "duration": 65, "channel": "NS", "item": "아세", "ppl": "☆명의보감(19:00~19:50)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-20_19:35_현대", "year": 2026, "month": 5, "date": 20, "date_str": "2026-05-20", "weekday": "수", "time": "19:35", "duration": 60, "channel": "현대", "item": "파라", "ppl": "☆조선 연장전(19:00~19:50)", "target_normal": 6500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-22_25:00_CJ", "year": 2026, "month": 5, "date": 22, "date_str": "2026-05-22", "weekday": "금", "time": "25:00", "duration": 60, "channel": "CJ", "item": "파라", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-24_24:31_SK", "year": 2026, "month": 5, "date": 24, "date_str": "2026-05-24", "weekday": "일", "time": "24:31", "duration": 60, "channel": "SK", "item": "아세", "ppl": "☆역전의한방(24:00~24:50)", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-26_05:30_SSG", "year": 2026, "month": 5, "date": 26, "date_str": "2026-05-26", "weekday": "화", "time": "05:30", "duration": 60, "channel": "SSG", "item": "파라", "ppl": "", "target_normal": 1000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-28_08:25_SK", "year": 2026, "month": 5, "date": 28, "date_str": "2026-05-28", "weekday": "목", "time": "08:25", "duration": 60, "channel": "SK", "item": "파라", "ppl": "★굿모닝(07:30~08:45)", "target_normal": 2750, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-26_25:00_CJ", "year": 2026, "month": 5, "date": 26, "date_str": "2026-05-26", "weekday": "화", "time": "25:00", "duration": 60, "channel": "CJ", "item": "파라", "ppl": "☆JTBC(24:40~25:20)", "target_normal": 1300, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-05-28_25:00_홈앤", "year": 2026, "month": 5, "date": 28, "date_str": "2026-05-28", "weekday": "목", "time": "25:00", "duration": 60, "channel": "홈앤", "item": "아세", "ppl": "", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-01_08:30_NS", "year": 2026, "month": 6, "date": 1, "date_str": "2026-06-01", "weekday": "월", "time": "08:30", "duration": 60, "channel": "NS", "item": "파라", "ppl": "", "target_normal": 2750, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-02_06:30_NS", "year": 2026, "month": 6, "date": 2, "date_str": "2026-06-02", "weekday": "화", "time": "06:30", "duration": 60, "channel": "NS", "item": "아세", "ppl": "", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-07_07:30_현대", "year": 2026, "month": 6, "date": 7, "date_str": "2026-06-07", "weekday": "일", "time": "07:30", "duration": 60, "channel": "현대", "item": "파라", "ppl": "☆조선다큐(07:30~08:20)", "target_normal": 5000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-03_06:30_SSG", "year": 2026, "month": 6, "date": 3, "date_str": "2026-06-03", "weekday": "수", "time": "06:30", "duration": 60, "channel": "SSG", "item": "올포", "ppl": "☆건식당(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-09_05:30_SSG", "year": 2026, "month": 6, "date": 9, "date_str": "2026-06-09", "weekday": "화", "time": "05:30", "duration": 60, "channel": "SSG", "item": "올포", "ppl": "☆건식당(05:00~05:50)", "target_normal": 500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-12_09:25_홈앤", "year": 2026, "month": 6, "date": 12, "date_str": "2026-06-12", "weekday": "금", "time": "09:25", "duration": 60, "channel": "홈앤", "item": "알파", "ppl": "☆tvN나비(09:00~09:50)", "target_normal": 5625, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-13_05:30_SSG", "year": 2026, "month": 6, "date": 13, "date_str": "2026-06-13", "weekday": "토", "time": "05:30", "duration": 60, "channel": "SSG", "item": "파라", "ppl": "", "target_normal": 1000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-10_13:30_NS", "year": 2026, "month": 6, "date": 10, "date_str": "2026-06-10", "weekday": "수", "time": "13:30", "duration": 60, "channel": "NS", "item": "아세", "ppl": "☆A 잘살면(13:20~14:10)", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-13_07:30_현대", "year": 2026, "month": 6, "date": 13, "date_str": "2026-06-13", "weekday": "토", "time": "07:30", "duration": 60, "channel": "현대", "item": "알파", "ppl": "★셜록(07:20~08:00)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-14_10:00_NS", "year": 2026, "month": 6, "date": 14, "date_str": "2026-06-14", "weekday": "일", "time": "10:00", "duration": 60, "channel": "NS", "item": "아세", "ppl": "☆A 잘살면(09:30~10:20)", "target_normal": 4500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-17_06:30_NS", "year": 2026, "month": 6, "date": 17, "date_str": "2026-06-17", "weekday": "수", "time": "06:30", "duration": 60, "channel": "NS", "item": "알파", "ppl": "☆건식당(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-18_06:30_홈앤", "year": 2026, "month": 6, "date": 18, "date_str": "2026-06-18", "weekday": "목", "time": "06:30", "duration": 60, "channel": "홈앤", "item": "알파", "ppl": "☆tvN나비(06:00~06:50)", "target_normal": 2000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-19_10:30_SSG", "year": 2026, "month": 6, "date": 19, "date_str": "2026-06-19", "weekday": "금", "time": "10:30", "duration": 60, "channel": "SSG", "item": "파라", "ppl": "☆역전의한방(10:30~11:10)", "target_normal": 3000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-18_08:15_NS", "year": 2026, "month": 6, "date": 18, "date_str": "2026-06-18", "weekday": "목", "time": "08:15", "duration": 60, "channel": "NS", "item": "아세", "ppl": "★굿모닝(07:30~08:45)", "target_normal": 2750, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-15_20:30_SSG", "year": 2026, "month": 6, "date": 15, "date_str": "2026-06-15", "weekday": "월", "time": "20:30", "duration": 60, "channel": "SSG", "item": "알파", "ppl": "☆건식당(20:00~20:50)", "target_normal": 4500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-18_11:30_현대", "year": 2026, "month": 6, "date": 18, "date_str": "2026-06-18", "weekday": "목", "time": "11:30", "duration": 60, "channel": "현대", "item": "알파", "ppl": "", "target_normal": 2500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-17_19:35_SSG", "year": 2026, "month": 6, "date": 17, "date_str": "2026-06-17", "weekday": "수", "time": "19:35", "duration": 60, "channel": "SSG", "item": "아세", "ppl": "★조선 연장전(19:10~20:00)", "target_normal": 6500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-22_08:30_NS", "year": 2026, "month": 6, "date": 22, "date_str": "2026-06-22", "weekday": "월", "time": "08:30", "duration": 60, "channel": "NS", "item": "아세", "ppl": "", "target_normal": 2750, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-24_19:35_CJ", "year": 2026, "month": 6, "date": 24, "date_str": "2026-06-24", "weekday": "수", "time": "19:35", "duration": 60, "channel": "CJ", "item": "알파", "ppl": "★조선 연장전(19:10~20:00)", "target_normal": 6500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-26_19:35_SSG", "year": 2026, "month": 6, "date": 26, "date_str": "2026-06-26", "weekday": "금", "time": "19:35", "duration": 65, "channel": "SSG", "item": "파라", "ppl": "☆명의보감(19:00~19:50)", "target_normal": 6000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-28_24:30_SSG", "year": 2026, "month": 6, "date": 28, "date_str": "2026-06-28", "weekday": "일", "time": "24:30", "duration": 40, "channel": "SSG", "item": "파라", "ppl": "☆역전의한방(24:00~24:50)", "target_normal": 1500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-06-04_07:20_NS", "year": 2026, "month": 6, "date": 4, "date_str": "2026-06-04", "weekday": "토", "time": "07:20", "duration": 60, "channel": "NS", "item": "알파", "ppl": "★셜록(07:20~08:00)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-07-09_11:30_현대", "year": 2026, "month": 7, "date": 9, "date_str": "2026-07-09", "weekday": "목", "time": "11:30", "duration": 60, "channel": "현대", "item": "알파", "ppl": "", "target_normal": 2500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-07-12_07:50_홈앤", "year": 2026, "month": 7, "date": 12, "date_str": "2026-07-12", "weekday": "일", "time": "07:50", "duration": 60, "channel": "홈앤", "item": "티큐", "ppl": "☆MBN 브랜드(07:30~08:20)", "target_normal": 5000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-07-22_19:35_NS", "year": 2026, "month": 7, "date": 22, "date_str": "2026-07-22", "weekday": "수", "time": "19:35", "duration": 60, "channel": "NS", "item": "> CJ", "ppl": "☆조선 연장전(19:10~20:00)", "target_normal": 6500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-08-09_09:00_NS", "year": 2026, "month": 8, "date": 9, "date_str": "2026-08-09", "weekday": "일", "time": "09:00", "duration": 80, "channel": "NS", "item": "알파", "ppl": "☆JTBC다큐(08:30~09:20)", "target_normal": 6000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-08-15_07:30_NS", "year": 2026, "month": 8, "date": 15, "date_str": "2026-08-15", "weekday": "토", "time": "07:30", "duration": 60, "channel": "NS", "item": "알파", "ppl": "★셜록(07:20~08:00)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-08-20_11:30_현대", "year": 2026, "month": 8, "date": 20, "date_str": "2026-08-20", "weekday": "목", "time": "11:30", "duration": 60, "channel": "현대", "item": "알파", "ppl": "", "target_normal": 2500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-08-04_19:40_NS", "year": 2026, "month": 8, "date": 4, "date_str": "2026-08-04", "weekday": "금", "time": "19:40", "duration": 60, "channel": "NS", "item": "알파", "ppl": "☆명의보감(19:00~19:50)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-09-04_10:00_NS", "year": 2026, "month": 9, "date": 4, "date_str": "2026-09-04", "weekday": "일", "time": "10:00", "duration": 75, "channel": "NS", "item": "파라", "ppl": "☆지킬박사 (09:30~10:20)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-10-11_09:00_NS", "year": 2026, "month": 10, "date": 11, "date_str": "2026-10-11", "weekday": "일", "time": "09:00", "duration": 80, "channel": "NS", "item": "알파", "ppl": "☆JTBC다큐(08:30~09:20)", "target_normal": 6000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-11-29_10:00_NS", "year": 2026, "month": 11, "date": 29, "date_str": "2026-11-29", "weekday": "일", "time": "10:00", "duration": 75, "channel": "NS", "item": "맥주", "ppl": "☆지킬박사 (09:30~10:20)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-12-13_09:00_NS", "year": 2026, "month": 12, "date": 13, "date_str": "2026-12-13", "weekday": "일", "time": "09:00", "duration": 80, "channel": "NS", "item": "알파", "ppl": "☆JTBC다큐(08:30~09:20)", "target_normal": 6000, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}, {"id": "2026-12-20_10:00_NS", "year": 2026, "month": 12, "date": 20, "date_str": "2026-12-20", "weekday": "일", "time": "10:00", "duration": 75, "channel": "NS", "item": "티큐", "ppl": "☆지킬박사 (09:30~10:20)", "target_normal": 5500, "target_high": null, "order_single": null, "order_double": null, "order_total": null, "ship_single": null, "ship_double": null, "ship_total": null, "conversion": null, "target_revenue": null, "order_amount": null, "achievement": null, "profit": null, "ad_cost": null, "pd": "", "sh": "", "price_single": null, "price_double": null, "note": ""}];
+
+let currentYear = 2026, currentMonth = 3;
+let activeFilters = new Set(['ALL']);
+
+const CHANNELS = ['SK','K','NS','SSG','W','현대','현대+','홈앤','CJ','CJ+'];
+const ITEMS    = ['알파','맥주','올포','파라','블병','아세','티큐','지오피'];
+const CH_NAMES = {SK:'SK스토아',K:'K쇼핑',NS:'NS홈쇼핑',SSG:'SSG닷컴',W:'W쇼핑',
+  '현대':'현대홈쇼핑','현대+':'현대홈쇼핑+','홈앤':'홈앤쇼핑',CJ:'CJ온스타일','CJ+':'CJ온스타일+'};
+
+function chClass(ch){
+  const m={SK:'ch-SK',K:'ch-K',NS:'ch-NS',SSG:'ch-SSG',W:'ch-W',
+    '현대':'ch-현대','현대+':'ch-현대p','홈앤':'ch-홈앤',CJ:'ch-CJ','CJ+':'ch-CJp'};
+  return m[ch]||'ch-def';
+}
+
+// ── 탭 전환 ──────────────────────────────────────────
+let currentTab = 0;
+function switchTab(n){
+  document.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('.ss-body').forEach((b,i)=>b.classList.toggle('hidden',i!==n));
+  currentTab = n;
+}
+
+// ── 채널 필터 ────────────────────────────────────────
+function buildFilterBar(){
+  const used = [...new Set(broadcasts.filter(b=>b.month===currentMonth&&b.year===currentYear).map(b=>b.channel))].sort();
+  const fb = document.getElementById('filter-bar');
+  fb.innerHTML = '<label>채널:</label>';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'ch-filter-btn active';
+  allBtn.dataset.ch = 'ALL';
+  allBtn.style.cssText='background:#334E7C;color:#fff;';
+  allBtn.textContent = '전체';
+  allBtn.onclick = () => toggleFilter(allBtn, 'ALL');
+  fb.appendChild(allBtn);
+  used.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = `ch-filter-btn ${chClass(ch)}`;
+    btn.dataset.ch = ch;
+    const n = broadcasts.filter(b=>b.channel===ch&&b.month===currentMonth&&b.year===currentYear).length;
+    btn.textContent = `${ch} (${n})`;
+    btn.onclick = () => toggleFilter(btn, ch);
+    if(activeFilters.has('ALL')||activeFilters.has(ch)) btn.classList.add('active');
+    fb.appendChild(btn);
+  });
+}
+
+function toggleFilter(btn, ch){
+  if(ch==='ALL'){
+    activeFilters = new Set(['ALL']);
+    document.querySelectorAll('.ch-filter-btn').forEach(b=>{
+      b.classList.toggle('active', b.dataset.ch==='ALL');
+    });
+  } else {
+    activeFilters.delete('ALL');
+    document.querySelector('[data-ch="ALL"]')?.classList.remove('active');
+    if(activeFilters.has(ch)){ activeFilters.delete(ch); btn.classList.remove('active'); }
+    else { activeFilters.add(ch); btn.classList.add('active'); }
+    if(activeFilters.size===0){ activeFilters.add('ALL'); document.querySelector('[data-ch="ALL"]')?.classList.add('active'); }
+  }
+  renderCalendar();
+}
+
+// ═══════════════════════════════════════════════════════
+// 캘린더 렌더
+// ═══════════════════════════════════════════════════════
+const MONTH_NAMES = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const WD = ['월','화','수','목','금','토','일'];
+
+function renderCalendar(){
+  document.getElementById('month-label').textContent = `${currentYear}년 ${MONTH_NAMES[currentMonth-1]}`;
+  const cal = document.getElementById('calendar');
+  cal.innerHTML = '';
+  WD.forEach((d,i)=>{
+    const h=document.createElement('div');
+    h.className='cal-hcell'+(i===5?' sat':i===6?' sun':'');
+    h.textContent=d; cal.appendChild(h);
+  });
+  const firstDay=new Date(currentYear,currentMonth-1,1);
+  const lastDay=new Date(currentYear,currentMonth,0);
+  const startOff=(firstDay.getDay()+6)%7;
+  const today=new Date();
+  const totalCells=Math.ceil((startOff+lastDay.getDate())/7)*7;
+
+  for(let i=0;i<totalCells;i++){
+    const dayNum=i-startOff+1;
+    const cell=document.createElement('div');
+    cell.className='cal-day';
+    const inMonth=dayNum>=1&&dayNum<=lastDay.getDate();
+    if(!inMonth){cell.classList.add('other-month');cal.appendChild(cell);continue;}
+
+    const thisDate=new Date(currentYear,currentMonth-1,dayNum);
+    const dow=(thisDate.getDay()+6)%7;
+    if(dow===5) cell.classList.add('sat');
+    if(dow===6) cell.classList.add('sun');
+    if(today.getFullYear()===currentYear&&today.getMonth()===currentMonth-1&&today.getDate()===dayNum)
+      cell.classList.add('today');
+
+    const dateStr=`${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+    cell.innerHTML=`<div class="day-num">${dayNum}<button class="add-btn" onclick="openAdd('${dateStr}')">+</button></div>`;
+
+    let dayBCs = broadcasts.filter(b=>b.date_str===dateStr);
+    if(!activeFilters.has('ALL')) dayBCs=dayBCs.filter(b=>activeFilters.has(b.channel));
+    dayBCs.sort((a,b)=>a.time.localeCompare(b.time));
+    dayBCs.forEach(b=>cell.appendChild(makeChip(b)));
+    cal.appendChild(cell);
+  }
+  updateStats();
+  buildFilterBar();
+}
+
+function makeChip(b){
+  const div=document.createElement('div');
+  div.className=`bc ${chClass(b.channel)}`;
+  div.onclick=e=>{e.stopPropagation();openEdit(b.id);};
+  let h=`<span class="bt">${b.time}</span><span class="bch">[${b.channel}]</span>`;
+  h+=`<span class="bi">${b.item}${b.duration!==60?` (${b.duration}분)`:''}</span>`;
+  if(b.target_normal) h+=`<span class="btg">목표 ${b.target_normal.toLocaleString()}${b.target_high?'('+b.target_high.toLocaleString()+')':''}</span>`;
+  if(b.ppl) h+=`<span class="bp">${b.ppl.substring(0,22)}</span>`;
+  // 실적 있으면 표시
+  if(b.order_total) h+=`<span class="bperf">✓ ${Number(b.order_total).toLocaleString()}건</span>`;
+  h+=`<span class="dx" onclick="event.stopPropagation();quickDel('${b.id}')">✕</span>`;
+  div.innerHTML=h;
+  return div;
+}
+
+function updateStats(){
+  const md=broadcasts.filter(b=>b.month===currentMonth&&b.year===currentYear);
+  const cc={};
+  md.forEach(b=>cc[b.channel]=(cc[b.channel]||0)+1);
+  const cs=Object.entries(cc).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`${c} ${n}회`).join(' | ');
+  // 실적 입력된 건수
+  const withPerf = md.filter(b=>b.order_total).length;
+  document.getElementById('stats-bar').innerHTML=
+    `<span>이번 달: <strong>${md.length}회</strong></span>
+     <span style="color:#ccc">|</span>
+     <span>${cs||'방송 없음'}</span>
+     <span style="flex:1"></span>
+     ${withPerf>0?`<span>실적 입력: <strong style="color:#27AE60">${withPerf}건</strong></span>`:''}
+     <span>전체: <strong>${broadcasts.length}회</strong></span>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// 모달 열기/닫기
+// ═══════════════════════════════════════════════════════
+function openAdd(dateStr){
+  document.getElementById('modal-title').textContent=`📋 방송 일정 추가 — ${dateStr}`;
+  document.getElementById('edit-id').value='';
+  document.getElementById('btn-delete').style.display='none';
+  clearForm();
+  document.getElementById('f-date').value=dateStr;
+  updateWeekday();
+  switchTab(0);
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function openEdit(id){
+  const b=broadcasts.find(x=>x.id===id); if(!b) return;
+  document.getElementById('modal-title').textContent=`✏️ 수정 — ${b.date_str} [${b.channel}] ${b.item}`;
+  document.getElementById('edit-id').value=id;
+  document.getElementById('btn-delete').style.display='';
+
+  // 기본 정보
+  document.getElementById('f-date').value=b.date_str;
+  document.getElementById('f-time').value=b.time;
+  document.getElementById('f-dur').value=b.duration;
+  document.getElementById('f-weekday').value=b.weekday||'';
+  document.getElementById('f-channel').value=b.channel;
+  document.getElementById('f-item').value=b.item;
+  document.getElementById('f-pd').value=b.pd||'';
+  document.getElementById('f-sh').value=b.sh||'';
+  document.getElementById('f-note').value=b.note||'';
+  document.getElementById('f-target-revenue').value=b.target_revenue||'';
+  document.getElementById('f-target-n').value=b.target_normal||'';
+  document.getElementById('f-target-h').value=b.target_high||'';
+
+  // PPL 분리
+  parsePplToForm(b.ppl||'');
+  document.getElementById('f-ppl-cost').value=b.ppl_cost||'';
+
+  // 실적
+  document.getElementById('f-order-s').value=b.order_single||'';
+  document.getElementById('f-order-d').value=b.order_double||'';
+  document.getElementById('f-order-t').value=b.order_total||'';
+  document.getElementById('f-ship-s').value=b.ship_single||'';
+  document.getElementById('f-ship-d').value=b.ship_double||'';
+  document.getElementById('f-ship-t').value=b.ship_total||'';
+  document.getElementById('f-conversion').value=b.conversion||'';
+  document.getElementById('f-order-amt').value=b.order_amount||'';
+  document.getElementById('f-achievement').value=b.achievement||'';
+  document.getElementById('f-bp-achv').value=b.bp_achievement||'';
+
+  // 수익/비용
+  document.getElementById('f-price-s').value=b.price_single||'';
+  document.getElementById('f-price-d').value=b.price_double||'';
+  document.getElementById('f-fee-s').value=b.fee_single||'';
+  document.getElementById('f-fee-d').value=b.fee_double||'';
+  document.getElementById('f-supply-s').value=b.supply_single||'';
+  document.getElementById('f-supply-d').value=b.supply_double||'';
+  document.getElementById('f-delivery').value=b.delivery||'';
+  document.getElementById('f-cost').value=b.cost||'';
+  document.getElementById('f-ad-cost').value=b.ad_cost||'';
+  document.getElementById('f-other-cost').value=b.other_cost||'';
+  document.getElementById('f-guest-cost').value=b.guest_cost||'';
+  document.getElementById('f-sg-cost').value=b.sg_cost||'';
+  document.getElementById('f-profit').value=b.profit||'';
+  document.getElementById('f-bp-profit').value=b.bp_profit||'';
+  document.getElementById('f-bp-diff').value=b.bp_diff||'';
+
+  switchTab(0);
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function clearForm(){
+  ['f-date','f-time','f-weekday','f-item','f-pd','f-sh','f-note',
+   'f-target-revenue','f-target-n','f-target-h',
+   'f-ppl-ch','f-ppl-start','f-ppl-end','f-ppl','f-ppl-cost',
+   'f-order-s','f-order-d','f-order-t','f-ship-s','f-ship-d','f-ship-t',
+   'f-conversion','f-order-amt','f-achievement','f-bp-achv',
+   'f-price-s','f-price-d','f-fee-s','f-fee-d',
+   'f-supply-s','f-supply-d','f-delivery','f-cost',
+   'f-ad-cost','f-other-cost','f-guest-cost','f-sg-cost',
+   'f-profit','f-bp-profit','f-bp-diff'
+  ].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+  document.getElementById('f-dur').value=60;
+  document.getElementById('f-channel').value='SK';
+  document.getElementById('f-ppl-type').value='';
+}
+
+function closeModal(){ document.getElementById('modal-overlay').classList.add('hidden'); }
+
+// ── PPL 파싱/조합 ────────────────────────────────────
+function parsePplToForm(pplStr){
+  if(!pplStr){ ['f-ppl-ch','f-ppl-start','f-ppl-end'].forEach(id=>document.getElementById(id).value=''); document.getElementById('f-ppl-type').value=''; return; }
+  const typeM=pplStr.match(/^[★☆]/);
+  document.getElementById('f-ppl-type').value=typeM?typeM[0]:'';
+  // 채널명 추출: ★채널A 몸신(20:10~21:00)
+  const chM=pplStr.match(/[★☆](.+?)\(/);
+  if(chM) document.getElementById('f-ppl-ch').value=chM[1].trim();
+  const timeM=pplStr.match(/\((\d{1,2}:\d{2})~(\d{1,2}:\d{2})\)/);
+  if(timeM){ document.getElementById('f-ppl-start').value=timeM[1]; document.getElementById('f-ppl-end').value=timeM[2]; }
+}
+
+function buildPplText(){
+  const type=document.getElementById('f-ppl-type').value;
+  const ch=document.getElementById('f-ppl-ch').value.trim();
+  const s=document.getElementById('f-ppl-start').value.trim();
+  const e=document.getElementById('f-ppl-end').value.trim();
+  if(!type||!ch) return '';
+  let txt=`${type}${ch}`;
+  if(s&&e) txt+=`(${s}~${e})`;
+  document.getElementById('f-ppl').value=txt;
+  return txt;
+}
+
+// PPL 자동조합 (입력시)
+['f-ppl-type','f-ppl-ch','f-ppl-start','f-ppl-end'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('input',buildPplText);
+  document.getElementById(id)?.addEventListener('change',buildPplText);
+});
+
+// ── 날짜 → 요일 자동 ────────────────────────────────
+function updateWeekday(){
+  const d=document.getElementById('f-date').value;
+  if(!d) return;
+  const WDK=['일','월','화','수','목','금','토'];
+  document.getElementById('f-weekday').value=WDK[new Date(d).getDay()];
+}
+document.getElementById('f-date').addEventListener('change',updateWeekday);
+
+// ── 자동계산 ─────────────────────────────────────────
+function calcOrderTotal(){
+  const s=parseInt(document.getElementById('f-order-s').value)||0;
+  const d=parseInt(document.getElementById('f-order-d').value)||0;
+  document.getElementById('f-order-t').value=(s+d)||'';
+}
+function calcShipTotal(){
+  const s=parseInt(document.getElementById('f-ship-s').value)||0;
+  const d=parseInt(document.getElementById('f-ship-d').value)||0;
+  document.getElementById('f-ship-t').value=(s+d)||'';
+}
+function calcAchievement(){
+  const amt=parseInt(document.getElementById('f-order-amt').value)||0;
+  const tgt=parseInt(document.getElementById('f-target-revenue').value)||0;
+  if(amt&&tgt) document.getElementById('f-achievement').value=Math.round(amt/tgt*100)+'%';
+}
+document.getElementById('f-order-amt').addEventListener('input',calcAchievement);
+document.getElementById('f-profit').addEventListener('input',calcBpDiff);
+document.getElementById('f-bp-profit').addEventListener('input',calcBpDiff);
+function calcBpDiff(){
+  const p=parseInt(document.getElementById('f-profit').value)||0;
+  const bp=parseInt(document.getElementById('f-bp-profit').value)||0;
+  if(p&&bp) document.getElementById('f-bp-diff').value=p-bp;
+}
+
+// ═══════════════════════════════════════════════════════
+// 저장 / 삭제
+// ═══════════════════════════════════════════════════════
+function saveEntry(){
+  const dateStr=document.getElementById('f-date').value;
+  const time=document.getElementById('f-time').value.trim();
+  const channel=document.getElementById('f-channel').value;
+  const item=document.getElementById('f-item').value.trim();
+  if(!dateStr||!time||!item){showToast('날짜, 시간, 아이템은 필수입니다.');return;}
+
+  const [yr,mo,dt]=dateStr.split('-').map(Number);
+  const WDK=['일','월','화','수','목','금','토'];
+  const editId=document.getElementById('edit-id').value;
+  const newId=editId||`${dateStr}_${time}_${channel}_${Date.now()}`;
+
+  const pplText=buildPplText()||document.getElementById('f-ppl').value.trim();
+
+  const entry={
+    id:newId,year:yr,month:mo,date:dt,
+    date_str:dateStr,weekday:WDK[new Date(dateStr).getDay()],
+    time,duration:parseInt(document.getElementById('f-dur').value)||60,
+    channel,item,ppl:pplText,
+    ppl_cost:parseInt(document.getElementById('f-ppl-cost').value)||null,
+    pd:document.getElementById('f-pd').value.trim(),
+    sh:document.getElementById('f-sh').value.trim(),
+    note:document.getElementById('f-note').value.trim(),
+    target_revenue:parseInt(document.getElementById('f-target-revenue').value)||null,
+    target_normal:parseInt(document.getElementById('f-target-n').value)||null,
+    target_high:parseInt(document.getElementById('f-target-h').value)||null,
+    // 실적
+    order_single:document.getElementById('f-order-s').value||null,
+    order_double:document.getElementById('f-order-d').value||null,
+    order_total:document.getElementById('f-order-t').value||null,
+    ship_single:document.getElementById('f-ship-s').value||null,
+    ship_double:document.getElementById('f-ship-d').value||null,
+    ship_total:document.getElementById('f-ship-t').value||null,
+    conversion:document.getElementById('f-conversion').value||null,
+    order_amount:document.getElementById('f-order-amt').value||null,
+    achievement:document.getElementById('f-achievement').value||null,
+    bp_achievement:document.getElementById('f-bp-achv').value||null,
+    // 수익/비용
+    price_single:document.getElementById('f-price-s').value||null,
+    price_double:document.getElementById('f-price-d').value||null,
+    fee_single:document.getElementById('f-fee-s').value||null,
+    fee_double:document.getElementById('f-fee-d').value||null,
+    supply_single:document.getElementById('f-supply-s').value||null,
+    supply_double:document.getElementById('f-supply-d').value||null,
+    delivery:document.getElementById('f-delivery').value||null,
+    cost:document.getElementById('f-cost').value||null,
+    ad_cost:document.getElementById('f-ad-cost').value||null,
+    other_cost:document.getElementById('f-other-cost').value||null,
+    guest_cost:document.getElementById('f-guest-cost').value||null,
+    sg_cost:document.getElementById('f-sg-cost').value||null,
+    profit:document.getElementById('f-profit').value||null,
+    bp_profit:document.getElementById('f-bp-profit').value||null,
+    bp_diff:document.getElementById('f-bp-diff').value||null,
+  };
+
+  if(editId){
+    const idx=broadcasts.findIndex(b=>b.id===editId);
+    if(idx>=0) broadcasts[idx]=entry;
+  } else {
+    broadcasts.push(entry);
+  }
+  renderCalendar();
+  closeModal();
+  showToast(editId?'✅ 수정되었습니다.':'✅ 추가되었습니다.');
+}
+
+function deleteEntry(){
+  const id=document.getElementById('edit-id').value; if(!id) return;
+  if(!confirm('정말 삭제하시겠습니까?')) return;
+  broadcasts=broadcasts.filter(b=>b.id!==id);
+  renderCalendar(); closeModal(); showToast('🗑 삭제되었습니다.');
+}
+
+function quickDel(id){
+  if(!confirm('삭제하시겠습니까?')) return;
+  broadcasts=broadcasts.filter(b=>b.id!==id);
+  renderCalendar(); showToast('삭제되었습니다.');
+}
+
+// ═══════════════════════════════════════════════════════
+// 월 이동
+// ═══════════════════════════════════════════════════════
+function changeMonth(d){
+  currentMonth+=d;
+  if(currentMonth>12){currentMonth=1;currentYear++;}
+  if(currentMonth<1){currentMonth=12;currentYear--;}
+  activeFilters=new Set(['ALL']);
+  renderCalendar();
+}
+
+// ═══════════════════════════════════════════════════════
+// CSV 내보내기 / 가져오기
+// ═══════════════════════════════════════════════════════
+function exportCSV(){
+  const cols=[
+    '아이템','홈쇼핑 채널','연도','일자','시작시간','종료시간','요일','방송시간',
+    '주문수량(싱글)','주문수량(더블)','주문수량합계',
+    '실출고(싱글)','실출고(더블)','실출고합계',
+    '전환율','홈쇼핑목표','주문금액','달성율(홈쇼핑기준)',
+    '이익금','사업계획이익금목표','사업계획달성율','사업계획달성차액',
+    'PPL채널','PPL시작시간','PPL종료시간','PPL비용','홈쇼핑광고비',
+    '판매가(싱글)','판매가(더블)','수수료(싱글)','수수료(더블)',
+    '공급단가(싱글)','공급단가(더블)','배송료','원가','기타비용','게스트비용','판관비',
+    'PD','SH','비고','날짜','월','일'
+  ];
+  const sorted=[...broadcasts].sort((a,b)=>a.date_str.localeCompare(b.date_str)||a.time.localeCompare(b.time));
+  
+  // PPL 파싱 helper
+  function parsePplCh(ppl){ const m=(ppl||'').match(/[★☆](.+?)\(/); return m?m[1].trim():''; }
+  function parsePplTime(ppl,idx){ const m=(ppl||'').match(/\((\d{1,2}:\d{2})~(\d{1,2}:\d{2})\)/); return m?m[idx]:''; }
+  
+  let csv='\uFEFF'+cols.join(',')+'\n';
+  sorted.forEach(b=>{
+    // 종료시간 계산
+    function addMin(t,m){ const[h,mi]=t.split(':').map(Number); const tot=h*60+mi+m; return `${String(Math.floor(tot/60)).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`; }
+    const endTime=b.time?addMin(b.time,b.duration||60):'';
+    const row=[
+      b.item,b.channel,`${b.year}년`,
+      `${String(b.month).padStart(2,'0')}월${String(b.date).padStart(2,'0')}일`,
+      b.time,endTime,b.weekday,b.duration||60,
+      b.order_single||'',b.order_double||'',b.order_total||'',
+      b.ship_single||'',b.ship_double||'',b.ship_total||'',
+      b.conversion||'',b.target_revenue||'',b.order_amount||'',b.achievement||'',
+      b.profit||'',b.bp_profit||'',b.bp_achievement||'',b.bp_diff||'',
+      parsePplCh(b.ppl),parsePplTime(b.ppl,1),parsePplTime(b.ppl,2),b.ppl_cost||'',b.ad_cost||'',
+      b.price_single||'',b.price_double||'',b.fee_single||'',b.fee_double||'',
+      b.supply_single||'',b.supply_double||'',b.delivery||'',b.cost||'',
+      b.other_cost||'',b.guest_cost||'',b.sg_cost||'',
+      b.pd||'',b.sh||'',b.note||'',b.date_str,b.month,b.date
+    ].map(v=>{const s=String(v??'');return(s.includes(',')||s.includes('"'))?`"${s.replace(/"/g,'""')}"`:`${s}`;});
+    csv+=row.join(',')+'\n';
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`방송현황종합_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast(`💾 CSV 저장 완료 (${sorted.length}행)`);
+}
+
+document.getElementById('file-import').addEventListener('change',function(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const text=ev.target.result.replace(/^\uFEFF/,'');
+    const lines=text.split('\n').filter(l=>l.trim());
+    const headers=parseCSVLine(lines[0]);
+    const imported=[];
+    for(let i=1;i<lines.length;i++){
+      const vals=parseCSVLine(lines[i]); if(vals.length<4) continue;
+      const obj={}; headers.forEach((h,j)=>obj[h.trim()]=vals[j]||'');
+      // 날짜 파싱 (YYYY-MM-DD or MM월DD일)
+      let dateStr=obj['날짜']||'';
+      if(!dateStr&&obj['일자']){
+        const m=obj['일자'].match(/(\d{2})월(\d{2})일/);
+        if(m) dateStr=`${obj['연도']?.replace('년','')||currentYear}-${m[1]}-${m[2]}`;
+      }
+      if(!dateStr) continue;
+      const d=new Date(dateStr);
+      const WDK=['일','월','화','수','목','금','토'];
+      const[yr,mo,dt]=dateStr.split('-').map(Number);
+      const b={
+        id:`${dateStr}_${obj['시작시간']||''}_${obj['홈쇼핑 채널']||''}_imp${i}`,
+        year:yr,month:mo,date:dt,date_str:dateStr,
+        weekday:obj['요일']||WDK[d.getDay()],
+        time:obj['시작시간']||'',
+        duration:parseInt(obj['방송시간'])||60,
+        channel:obj['홈쇼핑 채널']||'',item:obj['아이템']||'',
+        ppl:'',target_normal:null,target_high:null,
+        order_single:obj['주문수량(싱글)']||null,order_double:obj['주문수량(더블)']||null,
+        order_total:obj['주문수량합계']||null,ship_single:obj['실출고(싱글)']||null,
+        ship_double:obj['실출고(더블)']||null,ship_total:obj['실출고합계']||null,
+        conversion:obj['전환율']||null,target_revenue:obj['홈쇼핑목표']||null,
+        order_amount:obj['주문금액']||null,achievement:obj['달성율(홈쇼핑기준)']||null,
+        profit:obj['이익금']||null,ad_cost:obj['홈쇼핑광고비']||null,
+        pd:obj['PD']||'',sh:obj['SH']||'',
+        price_single:obj['판매가(싱글)']||null,price_double:obj['판매가(더블)']||null,
+        note:obj['비고']||''
+      };
+      // PPL 조합
+      const pplCh=obj['PPL채널']||''; const ps=obj['PPL시작시간']||''; const pe=obj['PPL종료시간']||'';
+      if(pplCh) b.ppl=`☆${pplCh}${ps&&pe?`(${ps}~${pe})`:''}`;
+      if(b.date_str&&b.channel) imported.push(b);
+    }
+    imported.forEach(imp=>{
+      const key=`${imp.date_str}_${imp.time}_${imp.channel}`;
+      const idx=broadcasts.findIndex(b=>`${b.date_str}_${b.time}_${b.channel}`===key);
+      if(idx>=0) broadcasts[idx]={...broadcasts[idx],...imp,id:broadcasts[idx].id};
+      else broadcasts.push(imp);
+    });
+    renderCalendar();
+    showToast(`📂 CSV 가져오기 완료 (${imported.length}행)`);
+    e.target.value='';
+  };
+  reader.readAsText(file,'UTF-8');
+});
+
+function parseCSVLine(line){
+  const result=[],re=/(?:^|,)("(?:[^"]|"")*"|[^,]*)/g;let m;
+  while((m=re.exec(line))!==null){let v=m[1];if(v.startsWith('"')&&v.endsWith('"'))v=v.slice(1,-1).replace(/""/g,'"');result.push(v.trim());}
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════
+// 빠른 입력 파서
+// ═══════════════════════════════════════════════════════
+function parseQuickInput(){
+  const raw=document.getElementById('quick-input').value.trim();
+  if(!raw){showToast('내용을 입력해주세요.');return;}
+  const parsed=parseText(raw);
+  openAdd(parsed.date_str||todayStr());
+  if(parsed.time) document.getElementById('f-time').value=parsed.time;
+  if(parsed.duration) document.getElementById('f-dur').value=parsed.duration;
+  if(parsed.channel) document.getElementById('f-channel').value=parsed.channel;
+  if(parsed.item) document.getElementById('f-item').value=parsed.item;
+  if(parsed.ppl){ parsePplToForm(parsed.ppl); document.getElementById('f-ppl').value=parsed.ppl; }
+  if(parsed.target_normal) document.getElementById('f-target-n').value=parsed.target_normal;
+  if(parsed.target_high) document.getElementById('f-target-h').value=parsed.target_high;
+  updateWeekday();
+  document.getElementById('quick-input').value='';
+}
+
+function parseText(text){
+  const result={date_str:'',time:'',duration:60,channel:'',item:'',ppl:'',target_normal:null,target_high:null};
+  let t=text;
+  const pplM=t.match(/[★☆][^\s\d][^\n]*/);
+  if(pplM){result.ppl=pplM[0].trim();t=t.replace(pplM[0],' ');}
+  const durM=t.match(/\((\d{2,3})\)|(\d{1,3})분|(\d+(?:\.\d+)?)시간(?:(\d+)분)?/);
+  if(durM){
+    if(durM[1]) result.duration=parseInt(durM[1]);
+    else if(durM[2]) result.duration=parseInt(durM[2]);
+    else if(durM[3]) result.duration=Math.round(parseFloat(durM[3])*60+(parseInt(durM[4])||0));
+    t=t.replace(durM[0],' ');
+  }
+  const timeM=t.match(/(\d{1,2}):(\d{2})|(\d{1,2})시\s*(\d{1,2})분|(\d{1,2})시반|(\d{1,2})시/);
+  if(timeM){
+    let h,m=0;
+    if(timeM[1]){h=parseInt(timeM[1]);m=parseInt(timeM[2]);}
+    else if(timeM[3]){h=parseInt(timeM[3]);m=parseInt(timeM[4]);}
+    else if(timeM[5]){h=parseInt(timeM[5]);m=30;}
+    else{h=parseInt(timeM[6]);m=0;}
+    result.time=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    t=t.replace(timeM[0],' ');
+  }
+  const cy=currentYear,cm=currentMonth;
+  const dateM=t.match(/(\d{1,2})\/(\d{1,2})|(\d{1,2})월\s*(\d{1,2})일|(\d{1,2})일/);
+  if(dateM){
+    let mo,dy;
+    if(dateM[1]){mo=parseInt(dateM[1]);dy=parseInt(dateM[2]);}
+    else if(dateM[3]){mo=parseInt(dateM[3]);dy=parseInt(dateM[4]);}
+    else{mo=cm;dy=parseInt(dateM[5]);}
+    result.date_str=`${cy}-${String(mo).padStart(2,'0')}-${String(dy).padStart(2,'0')}`;
+    t=t.replace(dateM[0],' ');
+  }
+  const chSorted=[...CHANNELS].sort((a,b)=>b.length-a.length);
+  for(const ch of chSorted){
+    const re=new RegExp('\\b'+ch.replace('+','\\+')+'\\b','i');
+    if(re.test(t)){result.channel=ch;t=t.replace(re,' ');break;}
+  }
+  if(!result.channel){
+    const chMap={'SK스토아':'SK','K쇼핑':'K','NS홈쇼핑':'NS','SSG닷컴':'SSG','W쇼핑':'W',
+      '현대홈쇼핑+':'현대+','현대홈쇼핑':'현대','홈앤쇼핑':'홈앤','홈앤':'홈앤','CJ온스타일+':'CJ+','CJ온스타일':'CJ'};
+    for(const[name,code]of Object.entries(chMap)){if(t.includes(name)){result.channel=code;t=t.replace(name,' ');break;}}
+  }
+  const tgtM=t.match(/목표\s*([\d,]+)(?:\(([\d,]+)\))?|([\d,]{4,})(?:\(([\d,]+)\))?/);
+  if(tgtM){
+    if(tgtM[1]){result.target_normal=parseInt(tgtM[1].replace(/,/g,''));if(tgtM[2])result.target_high=parseInt(tgtM[2].replace(/,/g,''));}
+    else if(tgtM[3]){result.target_normal=parseInt(tgtM[3].replace(/,/g,''));if(tgtM[4])result.target_high=parseInt(tgtM[4].replace(/,/g,''));}
+    t=t.replace(tgtM[0],' ');
+  }
+  const remaining=t.replace(/\s+/g,' ').trim().replace(/^[\s\-·]+|[\s\-·]+$/g,'').replace(/\b(추가|입력|방송|일정)\b/g,'').trim();
+  if(remaining) result.item=remaining;
+  for(const itm of ITEMS){if(text.includes(itm)&&(!result.item||result.item.length>10)){result.item=itm;break;}}
+  return result;
+}
+
+function todayStr(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+// ── 유틸 ─────────────────────────────────────────────
+let toastT;
+function showToast(msg,dur=2500){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),dur);
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeModal();});
+document.getElementById('quick-input').addEventListener('keydown',e=>{if(e.key==='Enter') parseQuickInput();});
+
+// ── 초기화 ───────────────────────────────────────────
+renderCalendar();
+</script>
+</body>
+</html>
