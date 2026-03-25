@@ -158,7 +158,6 @@
     .ss-grid-3{grid-template-columns:1fr 1fr;}
   }
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -171,8 +170,6 @@
   <span style="flex:1"></span>
   <label class="hbtn hbtn-blue">📂 CSV 가져오기<input type="file" id="file-import" accept=".csv"></label>
   <button class="hbtn hbtn-green" onclick="exportCSV()">💾 CSV 저장</button>
-  <button class="hbtn hbtn-orange" id="g-login-btn" onclick="googleLogin()">🔗 Google 연동</button>
-  <span id="g-status" style="font-size:.75rem;color:#90EE90;display:none;">✅ 연결됨</span>
 </header>
 
 <!-- 빠른 입력 -->
@@ -1108,37 +1105,9 @@ document.getElementById('quick-input').addEventListener('keydown',e=>{if(e.key==
 renderCalendar();
 
 // ═══════════════════════════════════════════════════════
-// Google Sheets 연동
+// Google Sheets 연동 (Apps Script 방식)
 // ═══════════════════════════════════════════════════════
-var G_CLIENT_ID = '460981004054-iji89mtc8l247n9d20pp7knrd7tj1bqf.apps.googleusercontent.com';
-var G_SHEET_ID  = '1KQnK0T151dpKvk8syzIvyQtuL0q77trQV1hDL75pAZY';
-var G_SHEET_TAB = '방송현황종합';
-var G_SCOPES    = 'https://www.googleapis.com/auth/spreadsheets';
-var gAccessToken = null;
-var gTokenClient = null;
-
-function googleLogin(){
-  if(!window.google || !window.google.accounts){
-    showToast('Google 라이브러리 로드 중... 잠시 후 다시 시도하세요.');
-    return;
-  }
-  if(!gTokenClient){
-    gTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: G_CLIENT_ID,
-      scope: G_SCOPES,
-      callback: function(resp){
-        if(resp.error){ showToast('Google 인증 실패: '+resp.error); return; }
-        gAccessToken = resp.access_token;
-        document.getElementById('g-login-btn').textContent = '🔗 Google 연결됨';
-        document.getElementById('g-login-btn').style.background = '#27AE60';
-        document.getElementById('g-status').style.display = 'inline';
-        showToast('✅ Google Sheets 연결됨!');
-        ensureSheetHeaders();
-      }
-    });
-  }
-  gTokenClient.requestAccessToken();
-}
+var APPS_SCRIPT_URL = 'https://script.google.com/a/macros/days-on.kr/s/AKfycbxUBqcjPRM0WwoO7gOmZS1dFE4W5aAVleUSPvDVggAE_EGIlQvrzlQL_lxf643W8W2f/exec';
 
 function buildRowFromEntry(b){
   function addMin(t,m){ var p=t.split(':').map(Number); var tot=p[0]*60+p[1]+m; return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0'); }
@@ -1161,44 +1130,18 @@ function buildRowFromEntry(b){
   ];
 }
 
-var G_HEADERS = [
-  '아이템','홈쇼핑 채널','연도','일자','시작시간','종료시간','요일','방송시간',
-  '주문수량(싱글)','주문수량(더블)','주문수량합계',
-  '실출고(싱글)','실출고(더블)','실출고합계',
-  '전환율','홈쇼핑목표','주문금액','달성율(홈쇼핑기준)',
-  '이익금','사업계획이익금목표','사업계획달성율','사업계획달성차액',
-  'PPL채널','PPL시작시간','PPL종료시간','PPL비용','홈쇼핑광고비',
-  '판매가(싱글)','판매가(더블)','수수료(싱글)','수수료(더블)',
-  '공급단가(싱글)','공급단가(더블)','배송료','원가','기타비용','게스트비용','판관비',
-  'PD','SH','비고','날짜','월','일'
-];
-
-function ensureSheetHeaders(){
-  fetch('https://sheets.googleapis.com/v4/spreadsheets/'+G_SHEET_ID+'/values/'+encodeURIComponent(G_SHEET_TAB+'!A1:AR1'),{
-    headers:{'Authorization':'Bearer '+gAccessToken}
-  }).then(function(r){return r.json();}).then(function(d){
-    var existing = d.values && d.values[0] ? d.values[0] : [];
-    if(existing.length === 0){
-      fetch('https://sheets.googleapis.com/v4/spreadsheets/'+G_SHEET_ID+'/values/'+encodeURIComponent(G_SHEET_TAB+'!A1')+'?valueInputOption=RAW',{
-        method:'PUT',
-        headers:{'Authorization':'Bearer '+gAccessToken,'Content-Type':'application/json'},
-        body:JSON.stringify({values:[G_HEADERS]})
-      });
-    }
-  }).catch(function(e){ console.warn('헤더 확인 실패', e); });
-}
-
 function syncToSheets(entry){
-  if(!gAccessToken) return; // 로그인 안 된 경우 무시
   var row = buildRowFromEntry(entry);
-  fetch('https://sheets.googleapis.com/v4/spreadsheets/'+G_SHEET_ID+'/values/'+encodeURIComponent(G_SHEET_TAB+'!A:AR')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+gAccessToken,'Content-Type':'application/json'},
-    body:JSON.stringify({values:[row]})
-  }).then(function(r){
-    if(r.ok){ showToast('📊 Google Sheets에 저장됨!'); }
-    else{ r.json().then(function(e){ showToast('시트 저장 실패: '+(e.error&&e.error.message||r.status)); }); }
-  }).catch(function(e){ showToast('네트워크 오류: '+e.message); });
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({row: row})
+  }).then(function(){
+    showToast('📊 Google Sheets에 저장됨!');
+  }).catch(function(e){
+    console.warn('시트 저장 실패:', e);
+  });
 }
 </script>
 </body>
