@@ -92,16 +92,12 @@
   ══════════════════════════════════════════════════ */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:10px;}
   .modal-overlay.hidden{display:none;}
-  .modal-sheet{background:#fff;border-radius:12px;width:min(920px,98vw);max-height:95vh;overflow-y:auto;box-shadow:0 12px 50px rgba(0,0,0,.28);display:flex;flex-direction:column;}
+  .modal-sheet{background:#fff;border-radius:12px;width:min(640px,98vw);max-height:95vh;overflow-y:auto;box-shadow:0 12px 50px rgba(0,0,0,.28);display:flex;flex-direction:column;}
   .modal-header{background:var(--primary);color:#fff;padding:14px 20px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;}
   .modal-header h2{font-size:1rem;font-weight:700;}
   .modal-close{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;opacity:.8;line-height:1;}
   .modal-close:hover{opacity:1;}
 
-  /* 탭 */
-  .modal-tabs{display:flex;border-bottom:2px solid var(--border);background:#f8fafc;}
-  .mtab{padding:10px 20px;font-size:.85rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;color:#888;margin-bottom:-2px;transition:all .15s;}
-  .mtab.active{color:var(--primary);border-bottom-color:var(--primary);background:#fff;}
 
   /* 스프레드시트 그리드 */
   .ss-body{padding:0;}
@@ -208,18 +204,9 @@
       <h2 id="modal-title">📋 방송 일정 추가</h2>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
-
-    <!-- 탭 -->
-    <div class="modal-tabs">
-      <div class="mtab active" onclick="switchTab(0)">📅 기본 정보</div>
-      <div class="mtab" onclick="switchTab(1)">📊 실적 입력</div>
-      <div class="mtab" onclick="switchTab(2)">💰 수익/비용</div>
-    </div>
-
     <input type="hidden" id="edit-id">
 
-    <!-- 탭 0: 기본 정보 -->
-    <div class="ss-body" id="tab-0">
+    <div class="ss-body">
       <div class="ss-section">
         <div class="ss-section-title">방송 기본 정보</div>
         <div class="ss-grid ss-grid-4" style="margin-bottom:10px;">
@@ -340,166 +327,6 @@
       </div>
     </div>
 
-    <!-- 탭 1: 실적 입력 -->
-    <div class="ss-body hidden" id="tab-1">
-      <div class="ss-section">
-        <div class="ss-section-title">주문 수량</div>
-        <div class="ss-grid ss-grid-3">
-          <div class="ss-field">
-            <label>주문수량 (싱글)</label>
-            <input type="number" id="f-order-s" placeholder="0" oninput="calcOrderTotal()">
-          </div>
-          <div class="ss-field">
-            <label>주문수량 (더블)</label>
-            <input type="number" id="f-order-d" placeholder="0" oninput="calcOrderTotal()">
-          </div>
-          <div class="ss-field">
-            <label>주문수량 합계</label>
-            <input type="number" id="f-order-t" class="auto-calc" placeholder="자동계산">
-          </div>
-        </div>
-      </div>
-      <div class="ss-divider"></div>
-      <div class="ss-section">
-        <div class="ss-section-title">실출고</div>
-        <div class="ss-grid ss-grid-3">
-          <div class="ss-field">
-            <label>실출고 (싱글)</label>
-            <input type="number" id="f-ship-s" placeholder="0" oninput="calcShipTotal()">
-          </div>
-          <div class="ss-field">
-            <label>실출고 (더블)</label>
-            <input type="number" id="f-ship-d" placeholder="0" oninput="calcShipTotal()">
-          </div>
-          <div class="ss-field">
-            <label>실출고 합계</label>
-            <input type="number" id="f-ship-t" class="auto-calc" placeholder="자동계산">
-          </div>
-        </div>
-      </div>
-      <div class="ss-divider"></div>
-      <div class="ss-section">
-        <div class="ss-section-title">매출 / 달성률</div>
-        <div class="ss-grid ss-grid-4">
-          <div class="ss-field">
-            <label>전환율</label>
-            <input type="text" id="f-conversion" placeholder="82%">
-          </div>
-          <div class="ss-field">
-            <label>주문금액 (원)</label>
-            <input type="number" id="f-order-amt" placeholder="0" oninput="calcAchievement()">
-          </div>
-          <div class="ss-field">
-            <label>달성율 (홈쇼핑기준)</label>
-            <input type="text" id="f-achievement" class="auto-calc" placeholder="자동계산">
-          </div>
-          <div class="ss-field">
-            <label>사업계획 달성율</label>
-            <input type="text" id="f-bp-achv" placeholder="계산값 입력">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 탭 2: 수익/비용 -->
-    <div class="ss-body hidden" id="tab-2">
-      <div class="ss-section">
-        <div class="ss-section-title">판매가</div>
-        <div class="ss-grid ss-grid-4">
-          <div class="ss-field">
-            <label>판매가 (싱글)</label>
-            <input type="number" id="f-price-s" placeholder="99000">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>판매가 (더블)</label>
-            <input type="number" id="f-price-d" placeholder="148000">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>수수료 (싱글)</label>
-            <input type="text" id="f-fee-s" placeholder="35.00%">
-          </div>
-          <div class="ss-field">
-            <label>수수료 (더블)</label>
-            <input type="text" id="f-fee-d" placeholder="35.00%">
-          </div>
-        </div>
-      </div>
-      <div class="ss-divider"></div>
-      <div class="ss-section">
-        <div class="ss-section-title">원가 / 비용</div>
-        <div class="ss-grid ss-grid-4">
-          <div class="ss-field">
-            <label>공급단가 (싱글)</label>
-            <input type="number" id="f-supply-s" placeholder="58500">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>공급단가 (더블)</label>
-            <input type="number" id="f-supply-d" placeholder="87455">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>배송료</label>
-            <input type="number" id="f-delivery" placeholder="0">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>원가</label>
-            <input type="number" id="f-cost" placeholder="0">
-            <span class="unit">원</span>
-          </div>
-        </div>
-        <div class="ss-grid ss-grid-4" style="margin-top:10px;">
-          <div class="ss-field">
-            <label>홈쇼핑 광고비</label>
-            <input type="number" id="f-ad-cost" placeholder="0">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>기타비용</label>
-            <input type="number" id="f-other-cost" placeholder="0">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>게스트비용</label>
-            <input type="number" id="f-guest-cost" placeholder="0">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>판관비</label>
-            <input type="number" id="f-sg-cost" placeholder="0">
-            <span class="unit">원</span>
-          </div>
-        </div>
-      </div>
-      <div class="ss-divider"></div>
-      <div class="ss-section">
-        <div class="ss-section-title">이익</div>
-        <div class="ss-grid ss-grid-4">
-          <div class="ss-field">
-            <label>이익금</label>
-            <input type="number" id="f-profit" placeholder="0">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>사업계획 이익금 목표</label>
-            <input type="number" id="f-bp-profit" placeholder="0">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label>사업계획 달성차액</label>
-            <input type="number" id="f-bp-diff" class="auto-calc" placeholder="자동계산">
-            <span class="unit">원</span>
-          </div>
-          <div class="ss-field">
-            <label></label>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 모달 하단 -->
     <div class="modal-footer">
       <button class="btn-delete" id="btn-delete" onclick="deleteEntry()" style="display:none;margin-right:auto;">🗑 삭제</button>
@@ -531,13 +358,6 @@ function chClass(ch){
   return m[ch]||'ch-def';
 }
 
-// ── 탭 전환 ──────────────────────────────────────────
-let currentTab = 0;
-function switchTab(n){
-  document.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('active',i===n));
-  document.querySelectorAll('.ss-body').forEach((b,i)=>b.classList.toggle('hidden',i!==n));
-  currentTab = n;
-}
 
 // ── 채널 필터 ────────────────────────────────────────
 function buildFilterBar(){
@@ -647,15 +467,6 @@ function updateStats(){
   const cc={};
   md.forEach(b=>cc[b.channel]=(cc[b.channel]||0)+1);
   const cs=Object.entries(cc).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`${c} ${n}회`).join(' | ');
-  // 실적 입력된 건수
-  const withPerf = md.filter(b=>b.order_total).length;
-  document.getElementById('stats-bar').innerHTML=
-    `<span>이번 달: <strong>${md.length}회</strong></span>
-     <span style="color:#ccc">|</span>
-     <span>${cs||'방송 없음'}</span>
-     <span style="flex:1"></span>
-     ${withPerf>0?`<span>실적 입력: <strong style="color:#27AE60">${withPerf}건</strong></span>`:''}
-     <span>전체: <strong>${broadcasts.length}회</strong></span>`;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -668,7 +479,6 @@ function openAdd(dateStr){
   clearForm();
   document.getElementById('f-date').value=dateStr;
   updateWeekday();
-  switchTab(0);
   document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
@@ -696,36 +506,6 @@ function openEdit(id){
   parsePplToForm(b.ppl||'');
   document.getElementById('f-ppl-cost').value=b.ppl_cost||'';
 
-  // 실적
-  document.getElementById('f-order-s').value=b.order_single||'';
-  document.getElementById('f-order-d').value=b.order_double||'';
-  document.getElementById('f-order-t').value=b.order_total||'';
-  document.getElementById('f-ship-s').value=b.ship_single||'';
-  document.getElementById('f-ship-d').value=b.ship_double||'';
-  document.getElementById('f-ship-t').value=b.ship_total||'';
-  document.getElementById('f-conversion').value=b.conversion||'';
-  document.getElementById('f-order-amt').value=b.order_amount||'';
-  document.getElementById('f-achievement').value=b.achievement||'';
-  document.getElementById('f-bp-achv').value=b.bp_achievement||'';
-
-  // 수익/비용
-  document.getElementById('f-price-s').value=b.price_single||'';
-  document.getElementById('f-price-d').value=b.price_double||'';
-  document.getElementById('f-fee-s').value=b.fee_single||'';
-  document.getElementById('f-fee-d').value=b.fee_double||'';
-  document.getElementById('f-supply-s').value=b.supply_single||'';
-  document.getElementById('f-supply-d').value=b.supply_double||'';
-  document.getElementById('f-delivery').value=b.delivery||'';
-  document.getElementById('f-cost').value=b.cost||'';
-  document.getElementById('f-ad-cost').value=b.ad_cost||'';
-  document.getElementById('f-other-cost').value=b.other_cost||'';
-  document.getElementById('f-guest-cost').value=b.guest_cost||'';
-  document.getElementById('f-sg-cost').value=b.sg_cost||'';
-  document.getElementById('f-profit').value=b.profit||'';
-  document.getElementById('f-bp-profit').value=b.bp_profit||'';
-  document.getElementById('f-bp-diff').value=b.bp_diff||'';
-
-  switchTab(0);
   document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
@@ -733,12 +513,7 @@ function clearForm(){
   ['f-date','f-time','f-weekday','f-item','f-pd','f-sh','f-note',
    'f-target-revenue','f-target-n','f-target-h',
    'f-ppl-ch','f-ppl-start','f-ppl-end','f-ppl','f-ppl-cost',
-   'f-order-s','f-order-d','f-order-t','f-ship-s','f-ship-d','f-ship-t',
-   'f-conversion','f-order-amt','f-achievement','f-bp-achv',
-   'f-price-s','f-price-d','f-fee-s','f-fee-d',
-   'f-supply-s','f-supply-d','f-delivery','f-cost',
-   'f-ad-cost','f-other-cost','f-guest-cost','f-sg-cost',
-   'f-profit','f-bp-profit','f-bp-diff'
+
   ].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.getElementById('f-dur').value=60;
   document.getElementById('f-channel').value='SK';
@@ -787,29 +562,6 @@ function updateWeekday(){
 document.getElementById('f-date').addEventListener('change',updateWeekday);
 
 // ── 자동계산 ─────────────────────────────────────────
-function calcOrderTotal(){
-  const s=parseInt(document.getElementById('f-order-s').value)||0;
-  const d=parseInt(document.getElementById('f-order-d').value)||0;
-  document.getElementById('f-order-t').value=(s+d)||'';
-}
-function calcShipTotal(){
-  const s=parseInt(document.getElementById('f-ship-s').value)||0;
-  const d=parseInt(document.getElementById('f-ship-d').value)||0;
-  document.getElementById('f-ship-t').value=(s+d)||'';
-}
-function calcAchievement(){
-  const amt=parseInt(document.getElementById('f-order-amt').value)||0;
-  const tgt=parseInt(document.getElementById('f-target-revenue').value)||0;
-  if(amt&&tgt) document.getElementById('f-achievement').value=Math.round(amt/tgt*100)+'%';
-}
-document.getElementById('f-order-amt').addEventListener('input',calcAchievement);
-document.getElementById('f-profit').addEventListener('input',calcBpDiff);
-document.getElementById('f-bp-profit').addEventListener('input',calcBpDiff);
-function calcBpDiff(){
-  const p=parseInt(document.getElementById('f-profit').value)||0;
-  const bp=parseInt(document.getElementById('f-bp-profit').value)||0;
-  if(p&&bp) document.getElementById('f-bp-diff').value=p-bp;
-}
 
 // ═══════════════════════════════════════════════════════
 // 저장 / 삭제
@@ -840,33 +592,6 @@ function saveEntry(){
     target_revenue:parseInt(document.getElementById('f-target-revenue').value)||null,
     target_normal:parseInt(document.getElementById('f-target-n').value)||null,
     target_high:parseInt(document.getElementById('f-target-h').value)||null,
-    // 실적
-    order_single:document.getElementById('f-order-s').value||null,
-    order_double:document.getElementById('f-order-d').value||null,
-    order_total:document.getElementById('f-order-t').value||null,
-    ship_single:document.getElementById('f-ship-s').value||null,
-    ship_double:document.getElementById('f-ship-d').value||null,
-    ship_total:document.getElementById('f-ship-t').value||null,
-    conversion:document.getElementById('f-conversion').value||null,
-    order_amount:document.getElementById('f-order-amt').value||null,
-    achievement:document.getElementById('f-achievement').value||null,
-    bp_achievement:document.getElementById('f-bp-achv').value||null,
-    // 수익/비용
-    price_single:document.getElementById('f-price-s').value||null,
-    price_double:document.getElementById('f-price-d').value||null,
-    fee_single:document.getElementById('f-fee-s').value||null,
-    fee_double:document.getElementById('f-fee-d').value||null,
-    supply_single:document.getElementById('f-supply-s').value||null,
-    supply_double:document.getElementById('f-supply-d').value||null,
-    delivery:document.getElementById('f-delivery').value||null,
-    cost:document.getElementById('f-cost').value||null,
-    ad_cost:document.getElementById('f-ad-cost').value||null,
-    other_cost:document.getElementById('f-other-cost').value||null,
-    guest_cost:document.getElementById('f-guest-cost').value||null,
-    sg_cost:document.getElementById('f-sg-cost').value||null,
-    profit:document.getElementById('f-profit').value||null,
-    bp_profit:document.getElementById('f-bp-profit').value||null,
-    bp_diff:document.getElementById('f-bp-diff').value||null,
   };
 
   if(editId){
